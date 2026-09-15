@@ -612,9 +612,32 @@ HEADS = {
 }
 
 
-def _l_no_freeze(it, s):
-    bs = best_slot(it, "fridge", "fridge_purchase", "fridge_open",
+# Ячейки вне морозилки. Список объявлен ОДИН раз: пока он стоял россыпью в
+# вызове, «все места, кроме морозилки» и «то, чем страница отвечает» были
+# двумя разными наборами, и одно молча подменяло другое.
+NON_FREEZE_KEYS = ("fridge", "fridge_purchase", "fridge_open",
                    "pantry", "pantry_purchase", "pantry_open")
+
+
+def _l_no_freeze(it, s):
+    # ОДНА ВЕЛИЧИНА — ОДИН КОНЕЦ ДИАПАЗОНА, И ОДИН НОСИТЕЛЬ. Здесь стоял
+    # `best_slot`, то есть САМОЕ ДЛИННОЕ окно вне морозилки, — а шапка
+    # страницы отвечает СВЯЗЫВАЮЩИМ, тем, что кончится первым. На /caviar/
+    # это давало «весь ответ — 1–4 недели» над собственным ответом «2 дня ·
+    # Safety limit · past it, throw it out»: ошибка в четырнадцать раз, в
+    # сторону съеденной испорченной еды, на странице про икру.
+    #
+    # И вторая ложь в той же фразе: «a single field» печаталось на 11
+    # страницах из 22, где заполнено больше одного не-морозильного поля, а
+    # таблица прямо ниже печатала их все.
+    filled = [k for k in NON_FREEZE_KEYS
+              if (it["slots"].get(k) or ("no",))[0] != "no"]
+    hot = hot_slot(it)
+    bs = None
+    if hot and hot[1] in filled:
+        bs = (hot[1], it["slots"][hot[1]])
+    elif filled:
+        bs = best_slot(it, *NON_FREEZE_KEYS)
     if not bs:
         return ("The USDA marks freezing as not recommended for this item and "
                 "publishes no usable figure for any other method either, which "
@@ -634,6 +657,15 @@ def _l_no_freeze(it, s):
             "in the %s." % (s["n_states"], s["subject"], v, SLOT_EN[key]),
             "The source prints the verdict without a reason and this page "
             "will not invent one.",
+            std(NOT_RECOMMENDED_WHY))
+    if len(filled) > 1:
+        return fit_para(
+            "The USDA marks the freezer as not recommended for this item, so "
+            "the answer comes from the %s figure: %s. The source fills %d of "
+            "its fields outside the freezer here, and every one of them is "
+            "printed below." % (SLOT_EN[key], v, len(filled)),
+            "The source prints that verdict without a reason, and a reason we "
+            "made up would be ours rather than theirs.",
             std(NOT_RECOMMENDED_WHY))
     return fit_para(
         "The USDA marks the freezer as not recommended for this item, so the "
@@ -1581,13 +1613,34 @@ def wrong_place_block(it, s):
         return ""
     st, key, better = rows[0]
     who = brief_who(it, st)
+    # СЛОВО ПЕРЕЖИЛО РАЗМЕТКУ. Здесь стояло «The signal above marks the
+    # pantry» — фраза из облика «бирка», где лаймовая ЗАЛИВКА действительно
+    # помечала выигравшее место. В облике «Дата, а не срок» сигнал это
+    # синяя КРАСКА, и до ввода даты его на странице НЕТ ВОВСЕ: посетитель
+    # 49 страниц искал глазами пометку, которой не существует. Хуже того,
+    # на трёх страницах названное место противоречило тому, чем страница
+    # отвечает в шапке, а на странице-выборе ответа наверху нет вообще.
+    #
+    # Теперь фраза говорит о САМОМ МЕСТЕ, а утверждение «этим страница и
+    # отвечает» печатается, только если это правда — то есть если ведущая
+    # ячейка и есть то самое место получше.
+    hot = hot_slot(it)
+    answers_with = bool(hot) and (hot[0] is st) and hot[1] == better
+    place = PLACE_NOUN[better.split("_")[0]]
+    # Длина хвоста — тоже часть правки: первая формулировка была на шесть
+    # слов длиннее прежней и вытолкнула семь страниц за верхнюю границу окна
+    # абзаца (75 слов при потолке 72), то есть молча выбросила их из корпуса.
+    # PLACE_NOUN несёт артикль САМ («the pantry»): шаблон со своим «the»
+    # давал «answers with the the pantry» на каждой такой странице.
+    tail = ("This page answers with %s, the longer of the two." % place
+            if answers_with else
+            "Of the two, %s is the longer." % place)
     lead = ("The USDA rates two places for %s in one state and they "
-            "disagree: %s %s against %s %s. The signal above marks %s, the "
-            "longer of the two."
+            "disagree: %s %s against %s %s. %s"
             % (who, st_text(st, better), SHELF_SHORT.get(better,
                                                          LISTING_WHERE[better]),
                st_text(st, key), SHELF_SHORT.get(key, LISTING_WHERE[key]),
-               PLACE_NOUN[better.split("_")[0]]))
+               tail))
     tip = (st.get("tips") or {}).get(key.split("_")[0])
     why = ("The source attaches a note to the shorter one, printed below in "
            "its own words." if tip else
@@ -1787,26 +1840,29 @@ def listing_parts(it):
     return (v, (" %s " % chr(183)).join(note))
 
 
-def out_field(st, key, lo, hi, clock, hot):
-    """Поле вычисленной даты: подпись, значение, вердикт словами.
+def out_field(st, key, lo, hi, clock):
+    """ЯЧЕЙКА ОТВЕТА — ГЛАВНЫЙ ПРИЁМ ОБЛИКА. Она ОДНА и та же до и после
+    ввода даты: до — срок словами источника, после — дата в календаре, на том
+    же месте и тем же кеглем, сигнальным цветом. Подпись над величиной из
+    «Use by» превращается в обратный отсчёт, и оба текста ставит скрипт.
 
-    Срок короче суток датой не показывается вовсе: двухчасовой предел при
+    Отсчёт («after the day you opened it») в ячейку НЕ ВХОДИТ: он стоит
+    подписью под ней. Внутри он добавлял к величине сорок знаков, а величина
+    здесь набрана крупной строкой — четыре строки заглавных вместо одной.
+
+    Срок короче суток сюда не попадает вовсе: двухчасовой предел при
     комнатной температуре, ставший датой, читается как разрешение на день.
+    Вызывающий обязан это проверить; см. label_fields.
     """
-    if hi < 1:
-        return ('<div class="%s">%s</div>'
-                % ("out" if hot else "secout",
-                   esc("%s. No date will help: it is shorter than a day."
-                       % st_text(st, key))))
     lead = "Use by"
     # Без скрипта здесь стояло «PICK THE DAY ABOVE» рядом с полем даты,
     # которое без скрипта ничего не считает: указание, которое никогда не
     # сбудется, хуже отсутствующего. Теперь в разметке стоит САМ ДИАПАЗОН —
     # ровно то, что печатает скрипт, пока день не выбран.
-    plain = esc("%s %s" % (st_text(st, key), CLOCK_TAIL[clock]))
-    return ('<div class="%s" data-lo="%d" data-hi="%d" data-clock="%s" '
+    plain = esc(st_text(st, key))
+    return ('<div class="out" data-lo="%d" data-hi="%d" data-clock="%s" '
             'data-lead="%s" data-plain="%s"><small>%s</small>%s</div>'
-            % ("out" if hot else "secout", int(round(lo)), int(round(hi)),
+            % (int(round(lo)), int(round(hi)),
                clock, lead, plain, lead, plain))
 
 
@@ -1926,6 +1982,13 @@ def belt_sentence(it):
                BELT_TAIL))
 
 
+# Что печатается в строке вида, которому источник не дал числа вне
+# морозилки. Объявлено здесь и читается вводной фразой: пока строка была
+# литералом внутри генератора, вводная обещала «виды, которым источник дал
+# число», и последней строкой перечня стоял вид без числа.
+NO_BAND_TEXT = "outside the freezer, nothing published"
+
+
 def pick_rows(it):
     """Виды страницы-выбора, сгруппированные ПО ОКНУ, короткое сверху.
 
@@ -1951,7 +2014,7 @@ def pick_rows(it):
         if len(sts) > 1:
             name = "%s and %d more" % (name, len(sts) - 1)
         rows.append(((v[0], v[1]) if v else (1e9, 1e9), name,
-                     band or "outside the freezer, nothing published"))
+                     band or NO_BAND_TEXT))
     return [(n, b) for _d, n, b in sorted(rows)]
 
 
@@ -1967,9 +2030,16 @@ def pick_field(it, silent):
     и говорит словами, почему одного числа тут нет.
     """
     sts = states_of(it)
+    picked = pick_rows(it)
+    # ВВОДНАЯ ОБЯЗАНА ОПИСЫВАТЬ ТОТ ПЕРЕЧЕНЬ, КОТОРЫЙ ПОД НЕЙ. На /milk/
+    # фраза обещала «виды, которым источник дал число», а последней строкой
+    # шёл «Plain or flavored — outside the freezer, nothing published»,
+    # то есть ровно тот вид, у которого числа нет и о котором подпись самого
+    # ответа двумя строками выше говорит «Package use-by date».
+    all_numbered = all(b != NO_BAND_TEXT for _n, b in picked)
     rows = "".join('<li><span class="rk">%s</span>'
                    '<span class="rv">%s</span></li>' % (esc(n), esc(b))
-                   for n, b in pick_rows(it))
+                   for n, b in picked)
     lead = lead_state(it)
     said = None
     if silent and lead is not None:
@@ -1978,17 +2048,37 @@ def pick_field(it, silent):
                 said = (k, (lead.get("says") or {})[k][0])
                 break
     if said:
+        # ВЕДУЩИЙ ВИД УЖЕ НАЗВАН ПОДПИСЬЮ ЭТОГО ЖЕ БЛОКА, двумя строками
+        # выше («Milk, plain or flavored · In the fridge — Package use-by
+        # date»). Его же строка в перечне говорила «outside the freezer,
+        # nothing published»: одна запись источника, два разных ответа на
+        # одном экране. Перечень отвечает на вопрос «а каким видам число
+        # ДАНО», и виду без числа в нём не место.
+        drop = short_kind(kind_cap(lead)) if lead is not None else None
+        if drop:
+            picked = [(nm, b) for nm, b in picked
+                      if not (b == NO_BAND_TEXT and nm.startswith(drop))]
+        all_numbered = all(b != NO_BAND_TEXT for _n, b in picked)
+        rows = "".join('<li><span class="rk">%s</span>'
+                       '<span class="rv">%s</span></li>' % (esc(n), esc(b))
+                       for n, b in picked)
         cap = field_label(it, lead, said[0])
         dur = SAYS_VALUE[said[1]]
         why = ("The USDA answers this one in words rather than in days, so "
-               "there is no figure here to count from. These are the kinds "
-               "it does put a number on:")
+               "there is no figure here to count from. "
+               + ("These are the kinds it does put a number on:"
+                  if all_numbered else
+                  "Here is every kind under this name, with whatever the "
+                  "source gives each:"))
     elif silent:
         cap = esc(short_kind(kind_title(it, lead))) if lead else esc(
             title_of(it))
         dur = NO_WINDOW_DUR
         why = ("The USDA gives this kind no window outside the freezer at "
-               "all. These are the kinds it does rate:")
+               "all. "
+               + ("These are the kinds it does rate:" if all_numbered else
+                  "Here is every kind under this name, with whatever the "
+                  "source gives each:"))
     else:
         cap = esc("%d kinds under one name" % len(sts))
         dur = PICK_DUR
@@ -2032,38 +2122,62 @@ def label_fields(it, s):
                       '<div class="sub">The USDA lists this food without a '
                       'storage time</div></div>' % (NO_WINDOW_CAP,
                                                     NO_WINDOW_DUR))
-    longest = longest_slot(it)
     h_st, h_key, h_lo, h_hi, h_clock, h_i = hot
-    l_st, l_key, _l_lo, l_hi, l_clock, l_i = longest
-    same_field = (h_i, h_key) == (l_i, l_key)
-    # Строка «что это значит» стоит В сигнальном поле, над перфорацией: она
-    # и есть последствие, ради которого человек смотрит на число. Одна
-    # величина — один носитель: слово выбирает та же fk.window_kind, что и
-    # раздел «Is this window about safety or about taste?» ниже.
+    # Строка «что это значит» стоит В ответе, выше границы: она и есть
+    # последствие, ради которого человек смотрит на число. Одна величина —
+    # один носитель: слово выбирает та же fk.window_kind, что и раздел «Is
+    # this window about safety or about taste?» ниже.
     h_text = st_text(h_st, h_key)
-    # Подпись отсчёта НЕ печатается там, где стоит поле даты: её уже несёт
-    # подпись самого поля («Stored on») и строка вердикта под ним. Три
-    # написания одного и того же стоили 19px первого экрана на каждой
-    # странице товара.
     dated = h_hi >= 1
-    out += ('<div class="hot"><div class="cap">%s</div>'
-            '<div class="dur%s">%s</div>%s'
-            '<div class="means">%s</div>%s%s%s</div>'
-            % (field_label(it, h_st, h_key), design.fit_display(h_text),
-               esc(h_text),
-               "" if dated else ('<div class="sub">%s</div>'
-                                 % clock_cap(h_clock, h_hi)),
-               MEANS_CHIP[row_kind(it, h_st, h_key)],
-               "",
-               date_input(h_clock, True) if dated else "",
-               out_field(h_st, h_key, h_lo, h_hi, h_clock, True)))
-    if not same_field:
-        l_text = st_text(l_st, l_key)
-        out += ('<div class="field"><div class="cap">%s</div>'
-                '<div class="dur%s">%s</div><div class="sub">%s</div></div>'
-                % (field_label(it, l_st, l_key), design.fit_display(l_text),
-                   esc(l_text), clock_cap(l_clock, l_hi)))
+    # ПОЛЕ ДАТЫ СТОИТ ВЫШЕ ОТВЕТА И ВНЕ ЕГО. На прежней бирке оно лежало
+    # внутри ответа, третьей строкой снизу, и до него не доходил взгляд:
+    # человек читал срок и уходил, а вся суть сайта — в дате. Порядок теперь
+    # такой же, как у прибора: имя, ввод, показание.
+    if dated:
+        out += date_input(h_clock, True)
+    # Величина ОДНА. Если день назван, её несёт .out (та же ячейка до и
+    # после ввода); если окно короче суток, даты не будет никогда, и её
+    # несёт .dur. Двух копий одного числа в ответе больше нет.
+    if dated:
+        value = out_field(h_st, h_key, h_lo, h_hi, h_clock)
+    else:
+        value = ('<div class="dur%s">%s</div>'
+                 % (design.fit_display(h_text), esc(h_text)))
+    out += ('<div class="hot"><div class="cap">%s</div>%s'
+            '<div class="sub">%s</div><div class="means">%s</div></div>'
+            % (field_label(it, h_st, h_key), value,
+               clock_cap(h_clock, h_hi),
+               MEANS_CHIP[row_kind(it, h_st, h_key)]))
     return out
+
+
+def longest_box(it, s):
+    """Самое длинное окно — ПЕРВЫМ блоком разбора, а не на первом экране.
+
+    На прежней бирке оно стояло под ответом и стоило 113px первого экрана
+    телефона. Это не ответ: ответ — то, что кончится РАНЬШЕ всего, и ради
+    него человек и открыл страницу. Самое длинное окно — СРАВНЕНИЕ, ровно
+    как кратность, и стоит теперь рядом с ней, сразу под границей.
+
+    Вычислительно ничего не изменилось: те же hot_slot и longest_slot, то же
+    условие «это не одна и та же ячейка». Переехала только точка печати.
+    """
+    rated = rated_all(it)
+    if not rated or split(it):
+        return ""
+    hot = hot_slot(it)
+    if hot is None:
+        return ""
+    longest = longest_slot(it)
+    h_key, h_i = hot[1], hot[5]
+    l_st, l_key, _l_lo, l_hi, l_clock, l_i = longest
+    if (h_i, h_key) == (l_i, l_key):
+        return ""
+    l_text = st_text(l_st, l_key)
+    return ('<div class="field"><div class="cap">%s</div>'
+            '<div class="dur%s">%s</div><div class="sub">%s</div></div>'
+            % (field_label(it, l_st, l_key), design.fit_display(l_text),
+               esc(l_text), clock_cap(l_clock, l_hi)))
 
 
 # --------------------------------------------------- кратность: одна на страницу
@@ -2471,9 +2585,18 @@ def _kinds_lead(it, s, budget, with_ends):
                 "freezer, %s holds %s."
                 % (n, said, kind_title(it, vals[0]), shelf_band(vals[0]),
                    kind_title(it, vals[-1]), shelf_band(vals[-1])))
+    # «САМОЕ КОРОТКОЕ ОКНО» ЗДЕСЬ ЗНАЧИЛО НЕ ТО. Величина считается через
+    # fk.shelf_days, то есть это ЛУЧШЕЕ неморозильное окно каждого вида, а
+    # фраза называла его «самым коротким окном вне морозилки» — и на
+    # /canned-goods/ обещала 12–18 месяцев там, где двумя предложениями ниже
+    # тот же абзац печатает «The shortest of these … 3 days to 4 days» по
+    # вскрытой банке. Один абзац, два разных смысла слова «shortest», и
+    # расхождение в девяносто раз.
+    #   Числа верны оба; ложной была рамка. Теперь сказано, ЧТО измерено:
+    # вид, который держится меньше всех, и его собственное лучшее окно.
     return ("The USDA files %d separate entries under this name%sand they do "
-            "not keep for the same time: the shortest window outside the "
-            "freezer is %s and the longest is %s."
+            "not keep for the same time: at its best the shortest-keeping of "
+            "them holds %s outside the freezer, the longest %s."
             % (n, said, shelf_band(vals[0]), shelf_band(vals[-1])))
 
 
@@ -2622,24 +2745,28 @@ def rank_block(it, s, ctx):
 
 
 DATE_TOOL_JS = (
-    "(function(){var ds=document.querySelectorAll('[data-clock][data-label]');"
-    "for(var z=0;z<ds.length;z++){var b=ds[z],c0=b.getAttribute('data-clock');"
-    "var lb=document.createElement('label');lb.htmlFor='kd-'+c0;"
-    "lb.textContent=b.getAttribute('data-label');"
-    "var ip=document.createElement('input');ip.type='date';ip.id='kd-'+c0;"
+    # `document` и `getAttribute` названы ОДИН раз: класс «посчитано из
+    # вашего дня» стоил 46 байт сверх потолка кода, а поднимать потолок ради
+    # цвета значило бы платить весом отданной страницы за облик.
+    "(function(){var D=document;function A(e,n){return e.getAttribute('data-'+n)}"
+    "var ds=D.querySelectorAll('[data-clock][data-label]');"
+    "for(var z=0;z<ds.length;z++){var b=ds[z],c0=A(b,'clock');"
+    "var lb=D.createElement('label');lb.htmlFor='kd-'+c0;"
+    "lb.textContent=A(b,'label');"
+    "var ip=D.createElement('input');ip.type='date';ip.id='kd-'+c0;"
     "b.appendChild(lb);b.appendChild(ip);b.hidden=false}"
-    "var outs=document.querySelectorAll('[data-lo]');if(!outs.length)return;"
+    "var outs=D.querySelectorAll('[data-lo]');if(!outs.length)return;"
     "var WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];var MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];"
     'var now=new Date();var today=new Date(now.getFullYear(),now.getMonth(),now.getDate());'
     "function fmt(d,y){var s=WD[d.getDay()]+' '+d.getDate()+' '+MO[d.getMonth()];"
     "return y?s+' '+d.getFullYear():s}function add(v,n){var p=v.split('-');"
     'return new Date(+p[0],+p[1]-1,+p[2]+n)}function days(a,b){return Math.round((b-a)/86400000)}'
     "function say(n){return n===1?'1 day':n+' days'}function run(){for(var k=0;"
-    "k<outs.length;k++){var e=outs[k];var c=e.getAttribute('data-clock');"
-    "var i=document.getElementById('kd-'+c);var head=e.firstChild;if(!i||!i.value){e.lastChild.nodeValue=e.getAttribute('data-plain');"
-    "head.textContent=e.getAttribute('data-lead');continue}var lo=add(i.value,+e.getAttribute('data-lo'));"
-    "var hi=add(i.value,+e.getAttribute('data-hi'));var y=lo.getFullYear()!==today.getFullYear()||hi.getFullYear()!==today.getFullYear();"
-    "var text=fmt(lo,y);if(hi-lo>0){text=text+' - '+fmt(hi,y)}e.lastChild.nodeValue=text;"
+    "k<outs.length;k++){var e=outs[k];var c=A(e,'clock');"
+    "var i=D.getElementById('kd-'+c);var head=e.firstChild;if(!i||!i.value){e.classList.remove('on');e.lastChild.nodeValue=A(e,'plain');"
+    "head.textContent=A(e,'lead');continue}var lo=add(i.value,+A(e,'lo'));"
+    "var hi=add(i.value,+A(e,'hi'));var y=lo.getFullYear()!==today.getFullYear()||hi.getFullYear()!==today.getFullYear();"
+    "var text=fmt(lo,y);if(hi-lo>0){text=text+' - '+fmt(hi,y)}e.lastChild.nodeValue=text;e.classList.add('on');"
     # «ПРОСРОЧЕНО» РЕШАЕТСЯ КОНЦОМ ОКНА, А ОТСЧЁТ — НАЧАЛОМ. Обе величины
     # брались от lo, и на 226 страницах из 296 календарь объявлял еду
     # просроченной внутри её собственного окна: у йогурта с окном 1-2 недели
@@ -2649,9 +2776,10 @@ DATE_TOOL_JS = (
     # РАННИЙ край, и перенос его на hi увёл бы икру с 7 суток на 28, то есть
     # ошибся бы в сторону съеденной испорченной.
     "var a=days(today,lo),b=days(today,hi);"
-    "head.textContent=b<0?('Past it by '+say(-b)):(a>0?(say(a)+' from today')"
-    ":(b===0?'Today is the last day':('In the window now, '+say(b)+' left')));"
-    "}}var ins=document.querySelectorAll('input[type=date]');for(var j=0;"
+    "head.textContent=(b<0?('Past it by '+say(-b)):(a>0?(say(a)+' from today')"
+    ":(b===0?'Today is the last day':('In the window now, '+say(b)+' left'))))"
+    "+' · '+A(e,'plain');"
+    "}}var ins=D.querySelectorAll('input[type=date]');for(var j=0;"
     "j<ins.length;j++){ins[j].addEventListener('change',run);ins[j].addEventListener('input',run)}"
     'run()})();'
 )
@@ -2736,8 +2864,8 @@ def date_block(it, s):
     extras = ["Each clock has its own field: a figure counted from the day "
               "of purchase cannot be counted from the day you opened it."
               if fields else
-              "The field for this one is on the label above, next to the "
-              "window it belongs to.",
+              "The field for this one is at the top of the page, above "
+              "the answer it changes.",
               "Nothing is sent anywhere: the arithmetic runs in your browser."]
     return ("<h2>Turning the range into a date</h2><p>%s</p>%s%s"
             % (compose(lead, extras, INTRO_MIN, INTRO_MAX), fields, rows))
@@ -3092,7 +3220,26 @@ def shelfmates_block(it, s, ctx):
                 % (esc(shelf), n, above, verb_n(above, "keeps", "keep"),
                    esc(short_of(top)), shelf_h(top), esc(short_of(bottom)),
                    shelf_h(bottom), _named(show)))
+    # ПОЯСНЕНИЕ ОБЯЗАНО БЫТЬ СВОИМ У КАЖДОЙ СТРАНИЦЫ. Первая попытка была
+    # одной и той же фразой на всех: сходство прозы выросло, и гейт
+    # близнецов снял СЕМЬ страниц — ровно то, за что этот сайт уже попадал
+    # в аудит. Теперь оговорка называет ЭТУ еду и ЕЁ ЖЕ два числа, а если
+    # они совпадают, не печатается вовсе: говорить о расхождении там, где
+    # его нет, — это второе утверждение, которое неправда.
+    # СРАВНИВАЮТСЯ ВЕЛИЧИНЫ, А НЕ СТРОКИ. Первая проверка сличала «1 week»
+    # с «1 week in the fridge once opened» — строки разные, число одно, — и
+    # оговорка выходила «sits here at 1 week rather than at the 1 week …
+    # its own answer prints», то есть противопоставляла величину самой себе.
+    own_shelf, own_ans = shelf_h(it), answer_line(it)
+    shelf_d, ans_d = fk.shelf_days(it), listing_days(it)
+    differs = (shelf_d is not None and ans_d is not None
+               and abs(shelf_d - ans_d) > 0.01)
     extras = []
+    if differs and own_shelf and own_ans:
+        extras.append("The order counts the longest window outside the "
+                      "freezer, so %s sits here at %s rather than at the %s "
+                      "its own answer prints."
+                      % (subj_l(s), own_shelf, own_ans))
     if s["rank"]:
         extras.append("Across the whole of %s the same product ranks %d of "
                       "%d." % (esc(it["category"]), s["rank"][0],
@@ -3110,12 +3257,22 @@ def shelfmates_block(it, s, ctx):
                       % (plural_en(blank_mates, "product"),
                          verb_n(blank_mates, "publishes", "publish"),
                          verb_n(blank_mates, "stays", "stay")))
-    extras.append("Place on the shelf is counted outside the freezer, "
-                  "which flattens almost everything it touches.")
+    extras.append("The freezer is left out of the order on purpose: it "
+                  "flattens almost everything it touches.")
     extras.append("A shelfmate with no published window of its own is left "
                   "out of the order rather than counted as zero.")
+    # СТРОКА ПЕЧАТАЕТ ТО ЧИСЛО, ПО КОТОРОМУ ОНА ЗДЕСЬ СТОИТ. Абзац называет
+    # полку сроком вне морозилки (`shelf_h`, верхний край лучшего
+    # неморозильного окна) — по нему же идёт и порядок, — а строки печатали
+    # связывающий ответ, то есть ДРУГОЙ конец и часто другую ячейку: «The
+    # shelf runs from Prosciutto at 3 months» стояло прямо над строкой
+    # «PROSCIUTTO — 2 months in the fridge». Сверка нашла 65 таких
+    # расхождений на 57 страницах.
+    #   Лечится не переписыванием абзаца, а тем же ключом, что уже заведён
+    # для соседнего блока: `by_shelf` ставит первой ровно ту величину, по
+    # которой шёл отбор, оставляя связывающий ответ второй строкой.
     return _detail("The rest of the %s shelf" % shelf, lead, extras,
-                   _mate_rows(show))
+                   _mate_rows(show, by_shelf=True))
 
 
 # Во сколько раз продукт должен держаться дольше, чтобы считаться ШАГОМ
@@ -3229,7 +3386,8 @@ def record_block(it, s, ctx, vintage):
                    "converting it to days" % unit)
         else:
             how = ("and the source prints its binding figure in days, so the "
-                   "window on the label is the source's own number untouched")
+                   "window at the top of this page is the source's own "
+                   "number untouched")
         # «Заполнено N из девяти» СКАЗАНО ДВАЖДЫ НА СТРАНИЦЕ, и считались
         # две РАЗНЫЕ вещи: выше — ячейки с любым ответом, здесь — ячейки со
         # сроком. На /sour-cream/ выходило «1 из девяти» и «0 из девяти» в
@@ -3798,7 +3956,7 @@ def means_block(it, s):
     # решала ровно полка. Рамку выбирает теперь та же функция, что и вердикт.
     kind, reason, why = row_verdict(it, st, key)
     where = SHELF_SHORT.get(key, LISTING_WHERE[key])
-    own = ("The signal field on this page reads %s %s."
+    own = ("The answer at the top of this page reads %s %s."
            % (st_text(st, key), where))
     says = std(MEANS_SAYS[kind])
     # ОБОСНОВАНИЕ НЕ ВЫПАДАЕТ ПО СЧЁТУ СЛОВ там, где оно и есть исключение:

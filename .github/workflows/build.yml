@@ -63,7 +63,7 @@ jobs:
           for f in index.html all/index.html past-the-date/index.html \
                    methodology/index.html privacy/index.html terms/index.html \
                    contact/index.html about/index.html 404.html robots.txt \
-                   sitemap.xml; do
+                   sitemap.xml _headers _redirects; do
             [ -s "dist/$f" ] || { echo "::error::нет файла $f"; exit 1; }
           done
           echo "обязательные файлы на месте"

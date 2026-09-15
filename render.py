@@ -71,7 +71,7 @@ METHOD_PATH = "/methodology/"
 DATA_VINTAGE = "USDA FoodKeeper, retrieved 1 September 2026"
 
 # Дата СОДЕРЖИМОГО, не сборки. Двигать руками вместе с текстом.
-CONTENT_DATE = date(2026, 9, 15)
+CONTENT_DATE = date(2026, 9, 16)
 
 # Ни счётчика, ни кук. Флаг читают разметка, текст политики и гейт — втроём
 # они разойтись не могут. У студийного сайта политика уверяла, что аналитики
@@ -240,6 +240,13 @@ FETCH_CARRIERS = (
 # роняет сборку: «наверное, безвредно» — это не разбор.
 #
 # Строка: (расширение, вид разбора, чем он оправдан).
+# ОБЪЯВЛЕНИЕ ВИДОВ. Первый столбец — РАСШИРЕНИЕ (начинается с точки) ЛИБО
+# ПОЛНОЕ ИМЯ файла, у которого расширения нет вовсе. Второй вид появился,
+# когда в выкладку добавились управляющие файлы платформы `_headers` и
+# `_redirects`: они без расширения по требованию Cloudflare, и механизм,
+# знавший только расширения, оставил бы их непрочитанными — гейт «браузер не
+# ходит наружу» покраснел на этом сам и был прав. Обходить его именем-«.»
+# значило бы соврать механизму; расширен механизм.
 SERVED_KINDS = (
     (".html", "markup", "страница: разбирается списком несущих"),
     (".xml", "urls", "карта сайта: адреса в тексте, все обязаны быть "
@@ -249,6 +256,11 @@ SERVED_KINDS = (
     (".svg", "markup", "картинка-разметка: внутри бывает href и url()"),
     (".js", "js", "скрипт файлом: те же приёмы, что и во встроенном"),
     (".json", "urls", "данные: адрес в них тоже адрес"),
+    # Два файла платформы объявлены ЗДЕСЬ, иначе они уходят наружу
+    # непрочитанными: гейт «браузер не ходит наружу» покраснел на этом сам,
+    # когда они появились в выкладке.
+    ("_headers", "urls", "заголовки ответа: правила по путям и сами пути"),
+    ("_redirects", "urls", "перенаправления: путь слева и путь справа"),
 )
 
 # ------------------------------------------ политика безопасности содержимого
@@ -641,10 +653,29 @@ def strip_row(path, right):
             % (mark, right))
 
 
-def perf_row():
-    """Перфорация. Она же — граница между ответом и всем остальным."""
-    return ('<div class="perf">&mdash;&mdash;&mdash; tear here '
-            "&mdash;&mdash;&mdash;</div>")
+# Подпись под границей «ответ кончился». Она НАЗЫВАЕТ ТО, ЧТО НИЖЕ, и потому
+# зависит от типа страницы: одна строка на все типы либо соврала бы на
+# половине из них, либо не сказала бы ничего. Там, где выше границы ответа
+# нет вовсе (правовые страницы), границы нет тоже.
+PERF_CAP = {
+    "product": "How this date is worked out",
+    # «Рейтинг» тут соврал бы: тем же типом идут рубрики и полный
+    # указатель, где никакого рейтинга нет. Список — правда для всех трёх.
+    "hub": "How this list is built",
+    "index": "How this list is built",
+}
+
+
+def perf_row(ptype):
+    """Граница между ответом страницы и разбором.
+
+    Прежний облик рисовал здесь отрывную перфорацию, и это был его главный
+    приём. Здесь линию 2px несёт сам ответ (.hot снизу), а тут стоит только
+    подпись: направление «Дата, а не срок» не украшает границу, оно её
+    ПОДПИСЫВАЕТ.
+    """
+    cap = PERF_CAP.get(ptype)
+    return ('<div class="perf">%s</div>' % cap) if cap else ""
 
 
 # ------------------------------------------------------------------- реклама
@@ -916,7 +947,7 @@ def shell(path, title, desc, body, index=True, script="", ptype="page",
 """ % {"title": esc(title), "desc": esc(desc), "domain": DOMAIN, "path": path,
        "idx": index_block(),
        "icon": ICON, "css": CSS, "tag": tag, "stub": stub,
-       "perf": perf_row(), "foot": foot_row(path), "band": band,
+       "perf": perf_row(ptype), "foot": foot_row(path), "band": band,
        "rail": rail,
        "og": og_tags(path, title, desc), "ld": ld_block(schema),
        "loader": ad_loader(len(slots)),
@@ -1074,9 +1105,11 @@ def product_page(it, s, ctx, nbs, cat_hubs, rel=()):
     # Бланк собирается ОДИН раз: из этой же строки берутся пары для схемы,
     # поэтому напечатанное и размеченное совпадают по построению.
     table = pr.table_block(it, s)
-    # Кратность стоит первым блоком корешка: полем бланка, а не разделом,
-    # потому что она и есть поле — подпись слева, величина справа.
-    stub = pr.cost_box(it) + "".join(sect(x) for x in (
+    # Сравнения стоят первыми блоками разбора: полями бланка, а не разделами,
+    # потому что они и есть поля — подпись, величина, отсчёт. Первым идёт
+    # самое длинное окно (переехало с первого экрана: это сравнение, а не
+    # ответ), вторым — кратность.
+    stub = pr.longest_box(it, s) + pr.cost_box(it) + "".join(sect(x) for x in (
         pr.kinds_block(it, s),
         pr.difference_block(it, s),
         table,
@@ -1623,7 +1656,7 @@ def findings_pages(accepted):
     op = sorted((s["open"].r, it["slug"], title_of(it), s["open"])
                 for it, s, _n in accepted if s["open"])[::-1][:HUB_ROWS]
     rows = [(sl, t, "%s shorter once open" % pr.mult(o.r),
-             "(%s %s to %s %s)"
+             "(at best %s %s against at best %s %s)"
              % (human(o.num), pr.SHORT_WHERE[o.num_key],
                 human(o.den), pr.SHORT_WHERE[o.den_key]))
             for _r, sl, t, o in op]
@@ -1709,11 +1742,39 @@ def category_pages(accepted, cat_hubs):
             span = (a / b) if b else 0
             # Числа в абзаце — ТЕ ЖЕ, что в строках над ним: величина,
             # названная в двух местах по-разному, однажды разойдётся.
-            said = ("%s leads at %s and %s closes the order at %s, a spread "
-                    "of %s across one shelf."
-                    % (esc(title_of(top[0])), esc(pr.listing_top_text(top[0])),
-                       esc(title_of(bot[0])), esc(pr.listing_top_text(bot[0])),
-                       pr.mult(span) if span > 1.05 else "almost nothing"))
+            #
+            # НИЧЬЯ — НЕ ПЕРВОЕ МЕСТО, И НЕ ПОСЛЕДНЕЕ. Сайт печатает на всех
+            # 295 карточках собственное правило «identical ranges share a
+            # place rather than being ordered arbitrarily», а витрины его
+            # нарушали: на /category/food-purchased-frozen/ у ВСЕХ четырёх
+            # еды ровно 3 дня, и «Pizza leads … Kugel closes the order»
+            # назначались порядком в массиве. Восемь витрин из тринадцати.
+            lead_n = sum(1 for r in rated
+                         if abs((pr.listing_days(r[0]) or 0.0) - a) < 1e-9)
+            tail_n = sum(1 for r in rated
+                         if abs((pr.listing_days(r[0]) or 0.0) - b) < 1e-9)
+            if lead_n == len(rated):
+                said = ("Every food here keeps the same %s, so this page is a "
+                        "tie rather than an order."
+                        % esc(pr.listing_top_text(top[0])))
+            else:
+                head_txt = ("%s %s share the top at %s"
+                            % (pr.plural_en(lead_n, "food"),
+                               "here" if lead_n > 1 else "",
+                               esc(pr.listing_top_text(top[0])))
+                            if lead_n > 1 else
+                            "%s leads at %s" % (esc(title_of(top[0])),
+                                                esc(pr.listing_top_text(top[0]))))
+                bot_txt = ("%s share the bottom at %s"
+                           % (pr.plural_en(tail_n, "food"),
+                              esc(pr.listing_top_text(bot[0])))
+                           if tail_n > 1 else
+                           "%s closes the order at %s"
+                           % (esc(title_of(bot[0])),
+                              esc(pr.listing_top_text(bot[0]))))
+                said = ("%s and %s, a spread of %s across one shelf."
+                        % (head_txt, bot_txt,
+                           pr.mult(span) if span > 1.05 else "almost nothing"))
         else:
             said = "No food here carries a single figure to rank it by."
         body = (sect(tbl)
@@ -2083,15 +2144,26 @@ def home(accepted, cat_hubs, ctx):
     Прежняя главная была статьёй: заголовок, абзац в шестьдесят слов и поле
     поиска на 389-м пикселе. Замерено на телефоне, а не на глаз.
     """
-    gains = [(s["gain"].r, it, s) for it, s, _n in accepted if s["gain"]]
-    gains.sort(reverse=True, key=lambda x: x[0])
+    # ЧЕМПИОН БЕРЁТСЯ ИЗ ТОГО ЖЕ ПОРЯДКА, КОТОРЫЙ ПЕЧАТАЕТ САМ РЕЙТИНГ.
+    # Здесь стояла своя сортировка — только по числу, — и при РАВНЫХ
+    # множителях порядок решался тем, в каком порядке лежит корпус. У
+    # Chicken и Shrimp выигрыш ровно 180 (540/3 и 360/2): главная объявляла
+    # чемпионом Chicken, а её же рейтинг по одному клику показывал сверху
+    # Shrimp, и JSON-LD отдавал первым местом тоже Shrimp. Ключ теперь
+    # дословно тот же, что в findings_pages: (число, слаг).
+    gains = sorted((s["gain"].r, it["slug"], it, s)
+                   for it, s, _n in accepted if s["gain"])[::-1]
     opens = [(s["open"].r, it, s) for it, s, _n in accepted if s["open"]]
     opens.sort(reverse=True, key=lambda x: x[0])
     cats = sorted({it["category"] for it, _s, _n in accepted})
     top = gains[0] if gains else None
+    # НИЧЬЯ — ЭТО НЕ ПЕРВОЕ МЕСТО. Сайт печатает собственное правило
+    # «identical ranges share a place», и главная обязана ему подчиняться.
+    tied = [g for g in gains
+            if top is not None and abs(g[0] - top[0]) < 1e-9]
 
     label = (
-        '<div class="field"><div class="cap">Storage label</div>'
+        '<div class="field"><div class="cap">Food storage times</div>'
         '<h1 class="item">How long does it last?</h1>'
         '<div class="sub"><b>%s</b> foods across <b>%s</b> categories'
         " &middot; USDA FoodKeeper figures &middot; the comparisons are "
@@ -2131,12 +2203,25 @@ def home(accepted, cat_hubs, ctx):
         # странице, и по тому же множеству. «The largest gain in the whole
         # data set belongs to Corn on the cob: 120 times» опровергалось пятью
         # собственными страницами, у которых бирка делила на другое.
-        + ("<p>The largest of those freezer gains on this site belongs to "
-           '<a href="/%s/">%s</a>: %s longer frozen than %s, %s '
-           "against %s.</p>"
-           % (top[1]["slug"], esc(title_of(top[1])), pr.mult(top[0]),
-              pr.DEN_PHRASE[top[2]["gain"].den_key],
-              human(top[2]["gain"].den), human(top[2]["gain"].num))
+        + (("<p>The largest of those freezer gains on this site is shared by "
+            "%s, each %s longer frozen than the window it has without a "
+            "freezer.</p>"
+            % (pr.listing(['<a href="/%s/">%s</a>' % (g[1], esc(title_of(g[2])))
+                           for g in tied[:2]])
+               if len(tied) <= 2 else
+               "%s, %s among them"
+               % (pr.plural_en(len(tied), "food"),
+                  pr.listing(['<a href="/%s/">%s</a>'
+                              % (g[1], esc(title_of(g[2])))
+                              for g in tied[:2]])),
+               pr.mult(top[0]))
+            if len(tied) > 1 else
+            "<p>The largest of those freezer gains on this site belongs to "
+            '<a href="/%s/">%s</a>: %s longer frozen than %s, %s '
+            "against %s.</p>"
+            % (top[1], esc(title_of(top[2])), pr.mult(top[0]),
+               pr.DEN_PHRASE[top[3]["gain"].den_key],
+               human(top[3]["gain"].den), human(top[3]["gain"].num)))
            if top else "")
         + "</section>"
         + '<section><h2>If you know the shelf but not the food</h2>'
@@ -2273,13 +2358,26 @@ def legal_pages():
               "page requested, your browser string &mdash; to deliver the "
               "page and to block abuse. We do not receive those logs as a "
               "report and do not use them to build any profile.</p>"
+              # КОНТРОЛЬ, КОТОРОГО НЕТ, ХУЖЕ ОТСУТСТВУЮЩЕГО. Здесь стояло
+              # «every release is compared byte for byte against the files
+              # the build produced, and a page that came back changed is a
+              # release we stop» — и стояло ДВОЕТОЧИЕМ, то есть как
+              # доказательство предыдущего заверения. Такой сверки не
+              # существует: в build.yml девять шагов, и «Rebuild must be
+              # byte-identical» сличает локальную пересборку с локальной
+              # сборкой, а не отданную страницу с собранной. Ложное
+              # утверждение о проверяемом факте в правовом документе.
+              #   Осталось то, что правда и что действительно защищает:
+              # переключатели выключены до выкладки, а если хост всё же
+              # допишет скрипт — его запрещает политика выше.
               "<p>A host can also add things to a page after we have built "
               "it. Cloudflare's email obfuscation and script rewriting both "
-              "do exactly that, and both are switched off for this domain: "
-              "every release is compared byte for byte against the files the "
-              "build produced, and a page that came back changed is a "
-              "release we stop. A promise about privacy is a promise about "
-              "what your browser loads, not about what we wrote.</p>"
+              "do exactly that. We turn both off for this domain, and if a "
+              "host adds something regardless, the content policy above is "
+              "what stops your browser from running it: the policy is built "
+              "from a hash of the exact code we shipped, so anything else "
+              "fails it. A promise about privacy is a promise about what "
+              "your browser loads, not about what we wrote.</p>"
             + "<h2>Contact and email</h2>"
               "<p>If you write to %s, we keep the message and your address "
               "for as long as it takes to answer, and delete it afterwards. "
@@ -2306,13 +2404,15 @@ def legal_pages():
             "figures assume the food was sound when stored and held as the "
             "item pages state: a refrigerator at 40&nbsp;°F or below, a "
             "freezer at 0&nbsp;°F or below, and a pantry at normal room "
-            "temperature. Two of those three are not refrigeration at "
+            "temperature. Only one of those three is not refrigeration at "
             "all.</p>"
             "<h2>Not advice</h2>"
             "<p>Nothing here is medical advice or a substitute for it. Some "
             "of the published windows are safety limits and some describe "
             "quality alone; each page states which of the two it is printing "
-            "and why, and the reasoning is the USDA's rather than ours. Food "
+            "and why. The source prints storage times without saying "
+            "which of the two each one is; the rule that decides it is ours "
+            "and is set out on the past the date page. Food "
             "can spoil before any range runs out, and if something looks or "
             "smells wrong the figures are irrelevant.</p>"
             "<h2>Content and reuse</h2>"
@@ -2770,6 +2870,37 @@ def robots():
             % DOMAIN)
 
 
+_YEAR_S = 365 * 24 * 60 * 60
+
+# ЗАГОЛОВКИ ОТВЕТА. Содержимое сайта их не требует — ни кук, ни форм, ни
+# входа, ни рекламной сети, — и предпубликационная проверка честно отнесла
+# их отсутствие к «можно лучше», а не к блокерам. Ставятся всё равно: стоят
+# они один файл, а закрывают то, чего разметкой не закрыть.
+#
+# ЧЕГО ЗДЕСЬ НАРОЧНО НЕТ — строки Content-Security-Policy. Cloudflare Pages
+# ДОБАВЛЯЕТ заголовок к уже объявленному, а не заменяет его, и две политики
+# дают ПЕРЕСЕЧЕНИЕ. На соседнем сайте это убило встраивание у всех 145
+# виджетов, и видно было только по `curl -I` с живой выкладки. Политика у
+# этого сайта уже есть: она в `<meta>` и посчитана ХЭШЕМ от того самого
+# кода, который уходит в страницу; вторая, приблизительная, могла бы её
+# только сузить.
+#
+# И ни одного правила по пути: правило пути Cloudflare тоже ДОБАВЛЯЕТ к
+# `/*`, а не заменяет. Здесь их нет вовсе, значит и складывать нечего.
+HEADERS = """/*
+  Strict-Transport-Security: max-age=%(year)d; includeSubDomains
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+  X-Frame-Options: DENY
+""" % {"year": _YEAR_S}
+
+# Адрес страницы — один. Второй адрес того же содержимого делит вес ссылок
+# надвое и заводит в выдаче дубль.
+REDIRECTS = """/index.html  /  301
+"""
+
+
 # -------------------------------------------------------------------- запись
 
 def assemble():
@@ -2807,6 +2938,8 @@ def assemble():
     indexed = [p for p in pages if not p.endswith(".html")]
     files["sitemap.xml"] = sitemap(indexed)
     files["robots.txt"] = robots()
+    files["_headers"] = HEADERS
+    files["_redirects"] = REDIRECTS
     return files, stats, accepted
 
 

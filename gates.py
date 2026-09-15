@@ -519,9 +519,12 @@ def _serve_kind(path):
     сайт.
     """
     import render as rd
+    base = os.path.basename(path).lower()
     ext = os.path.splitext(path)[1].lower()
     for e, kind, _why in rd.SERVED_KINDS:
-        if e == ext:
+        # Полное имя проверяется ПЕРВЫМ: у файла без расширения `ext` пуст,
+        # и сверка по нему совпала бы с чем угодно таким же безрасширенным.
+        if e == base or (e.startswith(".") and e == ext):
             return kind
     return None
 
@@ -848,8 +851,12 @@ def g_served_kinds_are_scanned(files):
         bad.append("в объявлении видов повторяется расширение")
     for ext, kind, why in rd.SERVED_KINDS:
         seen += 1
-        if not ext.startswith("."):
-            bad.append("вид «%s» объявлен не расширением" % ext)
+        # Либо расширение с точки, либо полное имя файла без точки вовсе.
+        # Третьего не бывает: «html» без точки совпало бы с файлом по имени
+        # html, а «.a.b» — ни с чем.
+        if not (ext.startswith(".") or ("." not in ext and "/" not in ext)):
+            bad.append("вид «%s» объявлен не расширением и не полным именем"
+                       % ext)
         if not why.strip():
             bad.append("вид «%s» не объяснён словами" % ext)
         if kind == "none":
@@ -858,7 +865,8 @@ def g_served_kinds_are_scanned(files):
             bad.append("вид «%s»: разбор «%s» никто не умеет читать"
                        % (ext, kind))
             continue
-        pts = _file_points("probe" + ext, probes[kind])
+        pts = _file_points(("probe" + ext) if ext.startswith(".") else ext,
+                           probes[kind])
         if not pts:
             bad.append("вид «%s» объявлен, а сканер по нему ничего не видит"
                        % ext)
@@ -1789,21 +1797,34 @@ def _tokens(css):
 # Пары, которые обязаны читаться, и МИНИМУМ для каждой. Графика — 3:1,
 # текст — 4,5:1. Список объявлен здесь, а не выведен из CSS: гейт, который
 # сам решает, что проверять, ничего не проверяет.
+#
+# ПЕРЕПИСАН 15.09.2026 под облик «Дата, а не срок». Четыре пары исчезли не
+# потому, что стали неудобны, а потому, что исчезла роль: сигнал перестал
+# быть ЗАЛИВКОЙ и стал краской, и на нём больше ничего не лежит — ни текста,
+# ни линии, ни подписи. Токенов --on-signal, --sig-cap и --sig-hair в облике
+# нет вовсе, и гейт это увидел сам, упав на «нет переменной», а не позеленев
+# молча. Взамен заведены пять пар на роли, которых раньше не было: сигнал
+# теперь ТЕКСТ, и его читаемость — вопрос 4,5:1, а не 3:1, и спрошен он на
+# обоих фонах. Пар стало тринадцать вместо двенадцати.
 CONTRAST_PAIRS = (
-    ("кольцо фокуса на бумаге", "--heavy", "--stock", 3.0),
-    ("кольцо фокуса на столешнице", "--heavy", "--surface", 3.0),
-    ("кольцо фокуса в сигнальном поле", "--on-signal", "--signal", 3.0),
+    ("кольцо фокуса и рамка ввода на бумаге", "--heavy", "--stock", 3.0),
+    ("кольцо фокуса и рамка ввода под листом", "--heavy", "--surface", 3.0),
+    ("подчёркивание поля ввода при фокусе", "--signal", "--stock", 3.0),
+    ("тусклый текст на фоне под листом", "--ink2", "--surface", 4.5),
     ("волосяная линия на бумаге", "--hair", "--stock", 3.0),
-    # Перфорация — САМЫЙ ГРОМКИЙ приём облика, и до этой волны она была
-    # нарисована ТЕМ ЖЕ токеном, что и самая тихая линия системы.
-    ("перфорация на бумаге", "--tear", "--stock", 3.0),
-    ("перфорация на столешнице", "--tear", "--surface", 3.0),
-    ("кромка листа на столешнице", "--edge", "--surface", 3.0),
-    ("линия внутри сигнального поля", "--sig-hair", "--signal", 3.0),
-    ("линия под сигнальным полем", "--on-signal", "--signal", 3.0),
+    ("линия реестра на фоне под листом", "--edge", "--surface", 3.0),
+    # Самая громкая линия системы: полоса 7px наверху страницы и граница
+    # «ответ кончился». В прежнем облике этим токеном была нарисована
+    # перфорация, и до отдельной волны она делила значение с волосяной.
+    ("громкая линия на бумаге", "--tear", "--stock", 3.0),
+    ("громкая линия на фоне под листом", "--tear", "--surface", 3.0),
     ("основной текст", "--ink", "--stock", 4.5),
+    ("основной текст на фоне под листом", "--ink", "--surface", 4.5),
     ("тусклый текст", "--ink2", "--stock", 4.5),
-    ("подпись в сигнальном поле", "--sig-cap", "--signal", 4.5),
+    # СИГНАЛЬНАЯ ДАТА — единственное, ради чего сигнал существует, и она
+    # ТЕКСТ. Порог для неё текстовый, а не графический.
+    ("сигнальная дата на бумаге", "--signal", "--stock", 4.5),
+    ("сигнальная дата на фоне под листом", "--signal", "--surface", 4.5),
 )
 
 
@@ -2955,8 +2976,16 @@ def g_one_value_one_relation(files):
         # которая печатает величину над перфорацией, какой бы метки она ни
         # носила. Подпись поиска носит тот же класс `cap` и величины не
         # печатает: одного `cap` для входа мало.
+        # ГЛАВНАЯ ВЕЛИЧИНА СТРАНИЦЫ ПЕРЕЕХАЛА ИЗ .dur В .out, и гейт обязан
+        # был переехать с ней. Пока условие входа спрашивало только `.dur`,
+        # проверка оставалась зелёной, но ответ — то самое число, ради
+        # которого страница написана, — не сверялся с бланком ВООБЩЕ: под
+        # проверкой оставались второе окно и поле «числа нет». Это третий
+        # случай подряд, когда смена облика оставляет гейт без его разметки;
+        # здесь он пойман не глазом, а вопросом «что этот гейт теперь НЕ
+        # проверяет», заданным до прогона.
         if not re.search(r'<div class="(?:hot|field)"><div class="cap">'
-                         r'[^<]*</div><div class="dur', t):
+                         r'[^<]*</div><div class="(?:dur|out)', t):
             continue
         seen += 1
         # Страница читается ПО ПОРЯДКУ: заголовок состояния задаёт контекст
@@ -2982,6 +3011,11 @@ def g_one_value_one_relation(files):
             r'<div class="(?:hot|field)">'
             r'<div class="cap">([^<]*)</div>'
             r'<div class="dur(?: long)?">([^<]*)</div>', t)
+        # У ячейки ответа величина лежит в `data-plain` — ровно то, что стоит
+        # в ней до ввода даты и что печатает скрипт, когда поле очищают.
+        fields += re.findall(
+            r'<div class="hot"><div class="cap">([^<]*)</div>'
+            r'<div class="out"[^>]*data-plain="([^"]*)"', t)
         if not fields:
             bad.append("%s: на бирке нет ни одной величины" % p)
             continue
@@ -4408,6 +4442,17 @@ def g_no_freeze_is_explained(files):
     return (bad or _seen(seen, "страниц с запретом морозилки"))[:8]
 
 
+def plural_ru(n):
+    """«1 страница» / «2 страницы» / «5 страниц» — сообщение гейта читает
+    человек, и «1 страниц» в нём стоило бы доверия к остальному тексту."""
+    tail = "страниц"
+    if n % 10 == 1 and n % 100 != 11:
+        tail = "страница"
+    elif n % 10 in (2, 3, 4) and n % 100 not in (12, 13, 14):
+        tail = "страницы"
+    return "%d %s" % (n, tail)
+
+
 def g_home_superlative(files):
     """Превосходная степень главной не спорит ни с одной страницей.
 
@@ -4419,21 +4464,42 @@ def g_home_superlative(files):
     t = _html(files).get("index.html")
     if t is None:
         return ["главной нет в сборке"]
-    m = re.search(r"largest of those freezer gains on this site belongs to "
-                  r'<a href="/([^/"]+)/">[^<]*</a>: ([0-9.]+) times', t)
+    # ДВЕ ФОРМЫ УТВЕРЖДЕНИЯ, И ОБЕ ОБЯЗАНЫ ПРОВЕРЯТЬСЯ. Единоличный чемпион
+    # и объявленная НИЧЬЯ — разные заявления, и раньше гейт знал только
+    # первое: как только главная научилась печатать ничью, он перестал
+    # находить утверждение вовсе (и честно покраснел, а не промолчал).
+    m = re.search(r"largest of those freezer gains on this site "
+                  r"(?:belongs to <a href=\"/[^/\"]+/\">[^<]*</a>: "
+                  r"([0-9.]+) times"
+                  r"|is shared by .{0,200}?, each ([0-9.]+) times)", t, re.S)
     if not m:
         return ["на главной нет утверждения о наибольшем выигрыше заморозки"]
-    claim = float(m.group(2))
-    bad, seen = [], 0
+    shared = m.group(2) is not None
+    claim = float(m.group(1) or m.group(2))
+    bad, seen, at_top = [], 0, 0
     for p, page in _products(files).items():
         x = re.search(r'<div class="cost"><div class="x">([0-9.]+)&times;'
                       r'</div><div class="t">(.*?)<span', page, re.S)
         if not x or "freezer buys" not in x.group(2):
             continue
         seen += 1
-        if float(x.group(1)) > claim + 0.05:
+        v = float(x.group(1))
+        if v > claim + 0.05:
             bad.append("%s: страница печатает %s, главная обещает %s как "
-                       "наибольшее" % (p, x.group(1), m.group(2)))
+                       "наибольшее" % (p, x.group(1), m.group(1) or m.group(2)))
+        elif abs(v - claim) < 0.05:
+            at_top += 1
+    # НИЧЬЯ — НЕ ПЕРВОЕ МЕСТО, и это вторая сторона того же вопроса. Сайт
+    # печатает на всех карточках правило «identical ranges share a place
+    # rather than being ordered arbitrarily», а главная объявляла
+    # единоличным чемпионом Chicken при равном выигрыше у Shrimp: её же
+    # рейтинг по одному клику показывал сверху другую еду.
+    if shared and at_top < 2:
+        bad.append("главная объявляет ничью, а %g× печатает %s"
+                   % (claim, plural_ru(at_top)))
+    if not shared and at_top > 1:
+        bad.append("главная называет единственного чемпиона, а %g× печатает "
+                   "%s" % (claim, plural_ru(at_top)))
     return (bad or _seen(seen, "страниц с выигрышем заморозки"))[:8]
 
 
@@ -4701,6 +4767,78 @@ def g_type_scale(files):
     return (bad or _seen(seen, "кеглей в облике"))[:8]
 
 
+def _css_solo_rules(css):
+    """Класс -> его собственные объявления, только для селекторов из ОДНОГО
+    класса. Составные («.hunt input») сюда не идут нарочно: вопрос гейта ниже
+    про наследование внутри блока, а не про каскад вообще."""
+    out = {}
+    for m in re.finditer(r"([^{}]+)\{([^{}]*)\}", css):
+        sel, body = m.group(1), m.group(2)
+        for one in sel.split(","):
+            mm = re.match(r"^\.([a-z][a-z0-9-]*)$", one.strip())
+            if mm:
+                out.setdefault(mm.group(1), "")
+                out[mm.group(1)] += body + ";"
+    return out
+
+
+# Ниже этого трекинг считается шумом, а не приёмом: погашать его не обязано
+# ничто, потому что и наследовать нечего.
+_TRACK_MIN_EM = 0.01
+
+
+def g_tracking_is_not_inherited(files):
+    """Потомок со СВОИМ кеглем внутри блока с em-трекингом объявляет трекинг.
+
+    Куплено переверсткой 16.09.2026, и дефект стоял на ПЕРВОЙ строке всех 295
+    карточек товара. `letter-spacing` наследуется ВЫЧИСЛЕННОЙ АБСОЛЮТНОЙ
+    длиной, а не долей кегля: `-.04em`, посчитанные на `.item` при её
+    собственных 60px, приходят в дочерний `.ask` с кеглем 15px как -2.4px,
+    то есть -0.16em. Пробелы схлопываются, и посетитель читает
+    «Howlongdoes lastinthefridge» вместо вопроса, ради ответа на который он
+    пришёл из поиска.
+
+    Ни один прежний гейт этого не видел и не мог: разметка верна, классы
+    объявлены и применены, кегли из шкалы, контраст в норме, высота в
+    бюджете. Дефект живёт РОВНО в паре «родитель с трекингом — потомок со
+    своим кеглем», и спрашивать про него надо этой парой.
+
+    Область гейта — разметка, а не стиль: родство берётся из отданных
+    страниц, потому что в CSS его не видно.
+    """
+    import design
+    css = design.strip_comments(design.CSS) + design.strip_comments(
+        design.AD_CSS)
+    rules = _css_solo_rules(css)
+    track_em, own_size, own_track = {}, set(), set()
+    for cls, body in rules.items():
+        t = re.search(r"letter-spacing:\s*(-?[0-9.]+)em", body)
+        if t:
+            track_em[cls] = float(t.group(1))
+        if "letter-spacing:" in body:
+            own_track.add(cls)
+        if "font-size:" in body:
+            own_size.add(cls)
+    pairs, bad, seen = {}, [], 0
+    for p, t in sorted(_html(files).items()):
+        for _tag, cls, anc, _stack in _stack_walk(t):
+            for c in cls:
+                if c not in own_size:
+                    continue
+                for a in anc:
+                    if abs(track_em.get(a, 0.0)) < _TRACK_MIN_EM:
+                        continue
+                    seen += 1
+                    if c not in own_track:
+                        pairs.setdefault((a, c), [track_em[a], 0, p])
+                        pairs[(a, c)][1] += 1
+    for (a, c), (em, cnt, where) in sorted(pairs.items()):
+        bad.append("«%s» внутри «%s» (трекинг %sem) объявляет свой кегль и не "
+                   "объявляет трекинга: %d узлов, напр. %s"
+                   % (c, a, em, cnt, where))
+    return (bad or _seen(seen, "пар «трекинг родителя — кегль потомка»"))[:8]
+
+
 def g_label_fits_one_screen(files):
     """Бирка помещается на ОДИН экран телефона. Считается высота, не знаки.
 
@@ -4835,6 +4973,12 @@ def _owned_numbers(t):
     out = set()
     for m in re.finditer(r'<div class="dur(?: long)?">([^<]*)</div>', t):
         out.update(re.findall(r"[0-9]+(?:\.[0-9]+)?", unescape(m.group(1))))
+    # Ячейка ответа — ТОЖЕ функция-владелец, и с переездом главной величины
+    # в неё список владельцев обязан был вырасти. Без этой строки срок из
+    # заголовка не находился бы на странице ни у одного продукта, у которого
+    # он больше нигде не повторяется.
+    for m in re.finditer(r'<div class="out"[^>]*data-plain="([^"]*)"', t):
+        out.update(re.findall(r"[0-9]+(?:\.[0-9]+)?", unescape(m.group(1))))
     for pat in (r'<span class="rv"[^>]*>(.*?)</span>',
                 r'<span class="v">(.*?)</span>'):
         for m in re.finditer(pat, t, re.S):
@@ -4891,7 +5035,8 @@ def g_row_parts_in_a_row(files):
         рисует их подряд, и имя слипается с величиной, как слиплось
         «1.2 V +0.0%same volts» в 520 ячейках соседнего сайта;
       · строка бланка, у которой есть имя и нет величины, или наоборот;
-      · `<div class="cap">` или `<div class="dur">` вне поля бирки.
+      · `<div class="cap">`, `<div class="dur">` или `<div class="out">`
+        вне поля ответа.
     """
     bad, seen = [], 0
     for p, t in sorted(_html(files).items()):
@@ -4905,7 +5050,7 @@ def g_row_parts_in_a_row(files):
                 elif "rows" not in anc:
                     bad.append("%s: часть строки бланка (%s) вне списка строк"
                                % (p, " ".join(cls)))
-            if "cap" in cls or "dur" in cls:
+            if "cap" in cls or "dur" in cls or "out" in cls:
                 seen += 1
                 if not (set(anc) & set(_CAP_HOMES)):
                     bad.append("%s: часть поля бирки (%s) вне поля"
@@ -5135,6 +5280,28 @@ def g_ad_slots_do_not_overlap(files):
                         bad.append("в сетке «%s» на %dpx «%s» и «%s» делят "
                                    "клетки %s" % (g.strip(), mq, names[i],
                                                   names[j], sorted(both)))
+        # СЕТКА С РЕКЛАМНЫМ МЕСТОМ ОБЯЗАНА ОБЪЯВЛЯТЬ КЛЕТКИ НЕ ОДНОМУ ТОЛЬКО
+        # МЕСТУ. Сосед, расставленный автоматически (у него объявлен один
+        # `grid-column` и нет `grid-row`), в разбор клеток НЕ ПОПАДАЕТ — и
+        # проверка «две клетки одному месту» становится проверкой одного
+        # элемента против пустоты. Пар нет, `bad` пуст, гейт зелен.
+        #
+        # Ровно так он и онемел при смене облика 16.09.2026: место переехало
+        # во вторую колонку с явными строками, а .label/.perf/.stub остались
+        # с одним `grid-column`. Поломка при этом срабатывала — литерал она
+        # находила, — но краснеть было нечему. Это второй вид немоты после
+        # «поломка промахнулась»: ВЫБОРКА СЪЁЖИЛАСЬ ДО ОДНОГО, а одного для
+        # сравнения не хватает.
+        if mine & ({"ad"} | set(rd.AD_SLOTS)):
+            if not placed:
+                bad.append("в сетке «%s» есть рекламное место и ни одной "
+                           "объявленной клетки" % g.strip())
+            for mq, byname in sorted(placed.items()):
+                seen += 1
+                if len(byname) < 2:
+                    bad.append("в сетке «%s» на %dpx клетки объявлены только "
+                               "у «%s»: сравнивать место не с чем"
+                               % (g.strip(), mq, sorted(byname)[0]))
     return (bad or _seen(seen, "мест, предков и клеток сетки"))[:8]
 
 
@@ -5390,6 +5557,7 @@ GATES = [
     ("строк списка вне списка нет", g_li_in_a_list),
     ("отступы выведены из одной базы", g_spacing_from_one_unit),
     ("кегли взяты из шкалы", g_type_scale),
+    ("трекинг не наследуется потомку", g_tracking_is_not_inherited),
     ("бирка помещается на один экран", g_label_fits_one_screen),
     ("счёт отвечает на своё утверждение", g_count_answers_its_claim),
     ("строки имён сверены с источником", g_name_rows_match_source),
@@ -5405,7 +5573,7 @@ GATES = [
     ("выкладка совпадает с генератором", g_dist_matches_build),
 ]
 
-GATE_COUNT = 78          # гейт, переставший запускаться, выглядит пройденным
+GATE_COUNT = 79          # гейт, переставший запускаться, выглядит пройденным
 
 DOMAIN_HINT = ["keepsuntil.com"]
 
@@ -6223,13 +6391,51 @@ def stamp_selftest():
 _SAVED = {}
 
 
+def _must_change(c, key, text):
+    """Подстановка в отданную страницу, которая ОБЯЗАНА что-то изменить.
+
+    Вторая половина того же урока, что и `_css_swap`: поломка, чей шаблон
+    уехал вместе с правкой текста, не меняет ничего, гейт остаётся зелёным, а
+    самопроверка печатает «ГЕЙТ НЕ СРАБОТАЛ» — и читается это как изъян
+    гейта. 16.09.2026 главная научилась печатать ничью («is shared by»
+    вместо «belongs to»), и ДВЕ поломки из трёх промахнулись молча.
+    """
+    if c[key] == text:
+        raise AssertionError(
+            "поломка разметки промахнулась мимо цели: %s не изменилась" % key)
+    c[key] = text
+
+
+def _css_swap(old, new, ad=False):
+    """Подмена в облике, которая ОБЯЗАНА найти цель.
+
+    Поломка, чей литерал уехал вместе с правкой стиля, не меняет НИЧЕГО:
+    гейт остаётся зелёным, самопроверка печатает «ГЕЙТ НЕ СРАБОТАЛ», и
+    читается это как изъян гейта, а не как промах поломки — время уходит не
+    туда. Переодевание сайта 16.09.2026 разом увело четыре таких литерала
+    (`--hair`, `--pad` и дважды клетку сетки рельсы), и нашлись они не
+    самопроверкой, а отдельным проходом по всем литералам.
+
+    Здесь промах ПАДАЕТ и называет строку, по которой целился.
+    """
+    import design
+    _SAVED.setdefault("css", design.CSS)
+    _SAVED.setdefault("ad", design.AD_CSS)
+    src = design.AD_CSS if ad else design.CSS
+    if old not in src:
+        raise AssertionError(
+            "поломка облика промахнулась мимо цели: «%s» нет в %s"
+            % (old, "AD_CSS" if ad else "CSS"))
+    if ad:
+        design.AD_CSS = src.replace(old, new, 1)
+    else:
+        design.CSS = src.replace(old, new, 1)
+
+
 def _break_ad_css(c):
     """Подменить размер в CSS и вернуть обратно нельзя: гейт читает модуль.
     Поэтому ломаем на время проверки и чиним сразу после."""
-    import design
-    _SAVED["ad"] = design.AD_CSS
-    design.AD_CSS = design.AD_CSS.replace("width:728px;height:90px",
-                                          "width:700px;height:90px")
+    _css_swap("width:728px;height:90px", "width:700px;height:90px", ad=True)
 
 
 def _break_corpus_slot(_c):
@@ -6270,31 +6476,19 @@ def _break_corpus_slot(_c):
 
 def _break_ad_out_of_flow(_c):
     """Место, выведенное из потока: в потоке коробки не налезают."""
-    import design
-    _SAVED.setdefault("ad", design.AD_CSS)
-    design.AD_CSS = design.AD_CSS.replace(
-        ".ad-rail{width:300px", ".ad-rail{position:absolute;width:300px", 1)
+    _css_swap(".ad-rail{width:300px", ".ad-rail{position:absolute;width:300px",
+              ad=True)
 
 
 def _break_ad_clipper(_c):
     """Новый обрезающий предок, не объявленный обрезающим."""
-    import design
-    _SAVED.setdefault("css", design.CSS)
-    design.CSS = design.CSS.replace(
-        ".stub{padding", ".stub{overflow:hidden;padding", 1)
+    _css_swap(".stub{padding", ".stub{overflow:hidden;padding")
 
 
 def _break_ad_grid(_c):
     """Две клетки сетки, назначенные одному месту."""
-    import design
-    _SAVED.setdefault("css", design.CSS)
-    _SAVED.setdefault("ad", design.AD_CSS)
-    design.AD_CSS = design.AD_CSS.replace(
-        ".sheet > .ad{grid-column:1;grid-row:2",
-        ".sheet > .ad{grid-column:1;grid-row:1", 1)
-    design.CSS = design.CSS.replace(
-        ".sheet > .ad{grid-column:1;grid-row:2",
-        ".sheet > .ad{grid-column:1;grid-row:1", 1)
+    _css_swap(".sheet > .ad{grid-column:2;grid-row:1/span 3}",
+              ".sheet > .ad{grid-column:1;grid-row:1/span 3}")
 
 
 def _restore_ad_css():
@@ -6347,18 +6541,17 @@ def _break_ads_off(_c):
 
 
 def _break_contrast(_c):
-    """Вернуть волосяной линии прежнюю альфу: 1,69:1 на бумаге."""
-    import design
-    _SAVED["css"] = design.CSS
-    design.CSS = design.CSS.replace("--hair:rgba(21,23,15,.48);",
-                                    "--hair:rgba(21,23,15,.24);")
+    """Вернуть тихой линии значение из макета направления: 1,30:1 на бумаге.
+
+    Это не выдуманное число: ровно #dfe2ea нарисовал автор «Даты, а не
+    срока», и вся структура реестра оказалась бы ниже графического минимума.
+    """
+    _css_swap("--hair:#8b92a3;", "--hair:#dfe2ea;")
 
 
 def _break_spacing(_c):
     """Отступ, набранный руками: ровно те 9px, что нашёл разбор облика."""
-    import design
-    _SAVED.setdefault("css", design.CSS)
-    design.CSS = design.CSS.replace(
+    _css_swap(
         ".strip{display:flex;flex-wrap:wrap;justify-content:space-between;",
         ".strip{display:flex;flex-wrap:wrap;justify-content:space-between;"
         "margin-top:9px;")
@@ -6366,9 +6559,7 @@ def _break_spacing(_c):
 
 def _break_base(_c):
     """База, переставшая быть базой: --pad объявлен числом."""
-    import design
-    _SAVED.setdefault("css", design.CSS)
-    design.CSS = design.CSS.replace("--pad:calc(var(--u)*3);", "--pad:14px;")
+    _css_swap("--pad:calc(var(--u)*4);", "--pad:14px;")
 
 
 def _break_spacing_empty(_c):
@@ -6385,25 +6576,28 @@ def _break_spacing_empty(_c):
 
 def _break_size_offscale(_c):
     """Кегль мимо шкалы: те самые 13,5px основного текста."""
-    import design
-    _SAVED.setdefault("css", design.CSS)
-    design.CSS = design.CSS.replace(".quiet{color:var(--ink2)}",
-                                    ".quiet{color:var(--ink2);"
-                                    "font-size:13.5px}")
+    _css_swap(".quiet{color:var(--ink2)}",
+              ".quiet{color:var(--ink2);font-size:13.5px}")
 
 
 def _break_size_body(_c):
     """Основной текст мельче 15px — ровно то, что было."""
-    import design
-    _SAVED.setdefault("css", design.CSS)
-    design.CSS = design.CSS.replace("--f2:15px;", "--f2:13.5px;")
+    _css_swap("--f2:15px;", "--f2:13.5px;")
 
 
 def _break_size_steps(_c):
     """Две ступени в полупикселе друг от друга — это не иерархия."""
-    import design
-    _SAVED.setdefault("css", design.CSS)
-    design.CSS = design.CSS.replace("--f3:18px;", "--f3:16px;")
+    _css_swap("--f3:18px;", "--f3:16px;")
+
+
+def _break_tracking_inherited(_c):
+    """Потомок, снова наследующий абсолютный трекинг родителя.
+
+    Ровно тот дефект, что стоял на 295 карточках: у `.ask` снимается
+    собственный `letter-spacing:normal`, и -.04em, посчитанные на `.item`
+    при 60px, приходят к нему как -2.4px при кегле 15px.
+    """
+    _css_swap("letter-spacing:normal;line-height:1.4}", "line-height:1.4}")
 
 
 def _break_size_empty(_c):
@@ -6518,6 +6712,15 @@ def selftest():
                         prods[plain], re.S).group(1)
     calc_page = next(p for p, t in sorted(prods.items())
                      if '<span class="calc">' in t)
+    # ДВА НОСИТЕЛЯ ОДНОЙ ВЕЛИЧИНЫ, и каждый ломается ОТДЕЛЬНО. Ответ
+    # страницы живёт в `.out` (та же ячейка до и после ввода даты), второе
+    # окно — в `.dur`. Пока поломка целилась только в `.dur`, проверка
+    # главного числа сайта не была доказана ни разу: носитель расщепился при
+    # смене облика, а поломка осталась на прежней половине.
+    dur_page = next(p for p, t in sorted(prods.items())
+                    if '<div class="dur">' in t)
+    out_page = next(p for p, t in sorted(prods.items())
+                    if '<div class="out" ' in t)
     no_freeze_page = next(
         p for p, t in sorted(prods.items())
         if ("not an option here" in t or "no colder option" in t)
@@ -6746,9 +6949,13 @@ def selftest():
          lambda c: c.__setitem__(other, c[any_page].replace(
              "<title>", "<title>x "))),
         ("одна величина — одно имя",
-         lambda c: c.__setitem__(any_page, re.sub(
+         lambda c: c.__setitem__(dur_page, re.sub(
              r'(<div class="dur">)[^<]+(</div>)',
-             r"\g<1>999 fortnights\g<2>", c[any_page], count=1))),
+             r"\g<1>999 fortnights\g<2>", c[dur_page], count=1))),
+        ("одна величина — одно имя",
+         lambda c: c.__setitem__(out_page, re.sub(
+             r'(<div class="out" [^>]*data-plain=")[^"]+(")',
+             r"\g<1>999 fortnights\g<2>", c[out_page], count=1))),
         ("страница не спорит сама с собой",
          lambda c: c.__setitem__(any_page, c[any_page].replace(
              H1, "<p>never at room temperature</p><ul class=\"rows\">"
@@ -6878,6 +7085,7 @@ def selftest():
         ("отступы выведены из одной базы", _break_base),
         ("отступы выведены из одной базы", _break_spacing_empty),
         # --- кегли: мимо шкалы, мелкий основной, ступени рядом, пусто
+        ("трекинг не наследуется потомку", _break_tracking_inherited),
         ("кегли взяты из шкалы", _break_size_offscale),
         ("кегли взяты из шкалы", _break_size_body),
         ("кегли взяты из шкалы", _break_size_steps),
@@ -7021,14 +7229,24 @@ def selftest():
                                  .replace("answered in words instead",
                                           "answered somehow"))),
         ("главная не спорит со страницами",
-         lambda c: c.__setitem__("index.html", re.sub(
-             r"(largest of those freezer gains on this site belongs to "
-             r'<a href="/[^/"]+/">[^<]*</a>: )[0-9.]+ times',
-             chr(92) + "1 1.5 times", c["index.html"], count=1))),
+         lambda c: _must_change(c, "index.html", re.sub(
+             r"((?:belongs to <a href=\"/[^/\"]+/\">[^<]*</a>: "
+             r"|is shared by .{0,200}?, each ))[0-9.]+ times",
+             chr(92) + "g<1>1.5 times", c["index.html"], count=1,
+             flags=re.S))),
         ("главная не спорит со страницами",
-         lambda c: c.__setitem__("index.html", c["index.html"].replace(
-             "largest of those freezer gains on this site belongs to",
-             "biggest number we could find belongs to", 1))),
+         lambda c: _must_change(c, "index.html", c["index.html"].replace(
+             "largest of those freezer gains on this site",
+             "biggest number we could find", 1))),
+        # Ничья, объявленная единоличным первым местом, — ровно тот дефект,
+        # что стоял на главной до 16.09.2026.
+        ("главная не спорит со страницами",
+         lambda c: c.__setitem__("index.html", re.sub(
+             r"largest of those freezer gains on this site is shared by "
+             r"(.{0,200}?), each ([0-9.]+) times",
+             lambda m: ("largest of those freezer gains on this site belongs "
+                        'to <a href="/x/">x</a>: ' + m.group(2) + " times"),
+             c["index.html"], count=1, flags=re.S))),
         ("сигналом помечено то, что кончится первым",
          lambda c: c.__setitem__(wrong_page, re.sub(
              r'(<div class="hot">\s*<div class="cap">)[^<]*',

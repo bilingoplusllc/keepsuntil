@@ -1,82 +1,78 @@
 # -*- coding: utf-8 -*-
-"""Облик KeepsUntil — «БИРКА НА БАНКЕ». Одна сырая строка CSS, ноль сборщиков.
+"""Облик KeepsUntil — «ДАТА, А НЕ СРОК». Одна сырая строка CSS, ноль сборщиков.
 
-ОТКУДА ЭТО. Первая попытка (02.09.2026) была системой токенов и тёмной темой,
-и Дмытро посмотрел и сказал: «как предыдущий сайт». Он был прав — токены,
-шкала кеглей и тёмная тема это гигиена, а не облик. По правилу D-014 заказаны
-четыре ЦЕЛЬНЫХ направления, каждое со своей гипотезой о том, чем является
-страница; выбрано глазами это.
+ОТКУДА ЭТО. По правилу D-014 были заказаны четыре ЦЕЛЬНЫХ направления. Сперва
+выбрана «Бирка на банке», и сайт был свёрстан ею целиком. 15.09.2026 Дмытро
+посмотрел все четыре и выбрал ЭТО, назвав причину: навигация и удобство. Он
+прав в том, что решает: на бирке первым крупным числом стоял СРОК, а человек
+с банкой в руке спрашивает не «сколько», а «до какого числа».
 
-ГИПОТЕЗА. Страница — не статья и не справочник, а ЭТИКЕТКА: физический предмет
-фиксированного размера, который можно распечатать и наклеить на контейнер.
-Читается с вытянутой руки, в плохом кухонном свете, человеком, у которого
-заняты руки: телефон в одной, банка в другой.
+ГИПОТЕЗА. Страница — не этикетка и не статья, а ПРИБОР с одним вводом.
+Наверху поле даты, ниже — ответ, и ответ этот есть ДАТА В КАЛЕНДАРЕ, а не
+длительность. Пока дата не названа, прибор честно показывает диапазон
+источника.
 
-ГЛАВНЫЙ ПРИЁМ — СГИБ ЭТО ПЕРФОРАЦИЯ. Всё выше пунктира — бирка с полным
-ответом, помещающаяся на один экран телефона без прокрутки. Всё ниже —
-отрывной корешок: метод, соседи, оговорки. Требование «ответ на одном экране»
-превращено в видимую физическую границу, которая сама объясняет, почему ниже
-лежит другое по важности.
+ГЛАВНЫЙ ПРИЁМ — ТА ЖЕ ЯЧЕЙКА ДО И ПОСЛЕ ВВОДА. Ответ живёт в ОДНОМ месте
+(`.out`). До ввода в нём стоит срок словами источника; после ввода на том же
+месте, тем же кеглем встаёт дата, набранная сигнальным цветом, а подпись над
+ней из «Use by» превращается в обратный отсчёт. Ничего не появляется и не
+исчезает: величина МЕНЯЕТ ПРИРОДУ, оставаясь на месте. Поэтому у ответа нет
+второй копии: прежняя бирка печатала срок дважды — крупно в `.dur` и ещё раз
+в `.out`, — и вторая копия и была тем, что делало страницу списком, а не
+прибором.
 
-ПРАВИЛО, КОТОРОЕ ИЗ ЭТОГО СЛЕДУЕТ И КОТОРОЕ ДЕРЖИТ СТРАНИЦУ:
-**над перфорацией нет ни одного предложения прозы.** Только подписи полей,
-величины и одно поле ввода. Проза начинается ровно после отрыва. Это
-проверяется гейтом, а не памятью.
+ПОРЯДОК, КОТОРЫЙ ИЗ ЭТОГО СЛЕДУЕТ: имя → ПОЛЕ ДАТЫ → ответ. Поле стоит ВЫШЕ
+ответа, потому что ответ от него зависит; на бирке оно лежало внутри ответа,
+третьей строкой снизу, и до него не доходил взгляд.
 
 ЧТО УЖЕ ЗАНЯТО НА ФЕРМЕ, и чего здесь поэтому нет:
   · MileageCurve — почти белый фон и сине-зелёный акцент;
   · FedPay — пергамент, тёмно-синяя полоса, ЗАСЕЧКОВЫЙ текст;
-  · BatteryCross — сталь, моноширинный, острые углы;
-  · KeepsUntil-1 — тёплая бумага, сливовый, Georgia в заголовках, одна
-    колонка по мере текста, разделы h2 стопкой, данные в таблицах с рамкой.
-Здесь: средне-тёмная столешница, белый прямоугольник бирки на ней, узкий
-гротеск капителью, ни одной таблицы, поля бланка вместо разделов.
+  · BatteryCross — сталь, МОНОШИРИННЫЙ, острые углы;
+  · KeepsUntil-1 — тёплая бумага, сливовый, Georgia, данные в таблицах;
+  · KeepsUntil-2 («бирка») — средне-тёмная столешница, белый лист на ней,
+    узкий гротеск капителью, лаймовая заливка, отрывная перфорация.
+Здесь: белая страница без столешницы и без листа, системный гротеск, синяя
+краска сигналом, вся иерархия — на трёх весах линейки и двух регистрах кегля.
 
 ПРАВИЛА СИСТЕМЫ, которые нельзя нарушать при правках:
-  · ОДИН сигнальный цвет `#d9f000`, и он ВСЕГДА ЗАЛИВКА, никогда не текст по
-    светлому. Ровно одно флуоресцентное поле на экран, и означает оно одно:
-    **ОТВЕТ, КОТОРЫЙ ДАЁТ ЭТА СТРАНИЦА.** У товара это окно, которое кончится
-    первым; у рейтинга — ведущая строка, ради которой рейтинг построен; на
-    главной — само поле поиска. Разбор облика нашёл у сигнала два
-    противоречащих занятия («кончится первым» на товаре против «набирай
-    здесь» на главной) и полное отсутствие на трети поверхности: одна фраза
-    выше — это то, что сводит оба занятия в одно и заводит сигнал на витрины;
-  · сигнал ОДИНАКОВ в обеих темах, потому что флуоресцентная краска не
-    меняется от освещения. Чёрное по нему даёт около 14:1 — самое читаемое
-    место на экране, и это физически достоверно;
-  · тёмная тема — ТОТ ЖЕ ПРЕДМЕТ, ОТПЕЧАТАННЫЙ НАОБОРОТ: краска светлой темы
-    (#15170f) становится бумагой тёмной. Это не инверсия наугад;
-  · иерархию несут ЧЕТЫРЕ ВЕСА ЛИНЕЙКИ, а не цвет: волосяная (--hair)
-    разделяет поля, жирная 3px (--heavy / --on-signal) отбивает шапку и
-    сигнальное поле, кромка листа (--edge) отделяет предмет от столешницы,
-    и САМАЯ ГРОМКАЯ — перфорация (--tear). Перфорация делила токен с
-    волосяной линией, то есть главный приём облика был нарисован самым тихим
-    значением системы; теперь у него свой токен и 10:1;
-  · бирка шириной 520px и НЕ РАСТЁТ. У физического предмета есть размер; на
-    широком экране лист становится двухколоночным, а не растягивается, и
-    колонка бирки КОНЧАЕТСЯ ВМЕСТЕ СО СВОИМ СОДЕРЖИМЫМ: `align-items:start`.
-    Прежде сетка растягивала бирку до высоты корешка, и 46% ширины экрана на
-    1280px были пустой белой полосой в 1400px высотой;
+  · ОДИН сигнал `--signal`, и здесь он КРАСКА, а не заливка. Работа у него
+    ровно одна: **ВЕЛИЧИНА, РАДИ КОТОРОЙ ПОСТРОЕНА ЭТА СТРАНИЦА, В ЕЁ
+    ОКОНЧАТЕЛЬНОМ ВИДЕ.** У товара это ДАТА, и потому сигнал загорается
+    только после ввода дня: пока дня нет, в ячейке стоит диапазон источника,
+    то есть заготовка ответа, а не ответ. У рейтинга это ведущее значение —
+    оно окончательно всегда. Ни заголовок, ни подпись, ни ссылка сигналом не
+    набираются; единственное исключение — кольцо фокуса, и оно рисуется
+    вокруг того самого поля, куда день и вводят;
+  · ДВА РЕГИСТРА КЕГЛЯ И НИ ОДНОГО ПРОМЕЖУТОЧНОГО. Капитель подписи (--f1,
+    прописные, трекинг .16em) и крупная величина (--d2/--d1, вес 800, трекинг
+    отрицательный). Всё между ними — проза (--f2) и два её усиления (--f3,
+    --f4) для имён в реестре. Подпись НАД величиной делает работу заголовка;
+  · ТРИ ВЕСА ЛИНЕЙКИ, и каждый значит своё: 7px наверху страницы — это сам
+    предмет; 2px отбивает ОТВЕТ и границу «ответ кончился»; 1px разделяет
+    строки реестра. Четвёртого веса нет. Цвет тихой линии обязан держать 3:1
+    на бумаге: макет направления рисовал её #dfe2ea, то есть 1,30:1, — вся
+    структура реестра была бы ниже графического минимума, ровно тот дефект,
+    который на этом сайте уже покупали;
+  · ДВА ВЕРТИКАЛЬНЫХ КРАЯ НА ВЕСЬ САЙТ. Имя по левому, величина по правому,
+    и колонка величины одинакова в таблице продукта, в рейтинге и в находках
+    поиска. Третьего края нет нигде;
+  · НИ ОДНОЙ РАМКИ ВОКРУГ ДАННЫХ. Рамка в этом направлении ровно одна и
+    означает ВВОД: её носит поле даты и поле поиска. Обвести рамкой таблицу
+    значило бы сказать, что в неё тоже можно писать;
   · каждый цвет объявлен на голом :root и переопределён в тёмной теме. Цвет,
-    объявленный единственный раз внутри media-блока, — дефект: у нас так
-    карточка осталась светлой внутри тёмной полосы при контрасте 1,07:1;
+    объявленный единственный раз внутри media-блока, — дефект;
   · текст не тусклее 4,5:1, графика не тусклее 3:1, В ОБЕИХ ТЕМАХ, и это
     СЧИТАЕТСЯ гейтом с наложением полупрозрачных значений на свой фон.
 
 ДВЕ ВЕЛИЧИНЫ, ИЗ КОТОРЫХ ВЫВЕДЕНО ВСЁ ОСТАЛЬНОЕ:
 
   · `--u:4px` — ЕДИНСТВЕННАЯ единица отступа. Каждый padding, margin, gap и
-    top в этом файле есть `calc(var(--u)*n)` при целом n или ноль. Разбор
-    облика насчитал здесь 13 разных значений отступа и шесть разных
-    `margin-top`, не выведенных ни из чего: «шесть ритмов в одной колонке,
-    шатающихся на 1–3px от полосы к полосе». Гейт «отступы выведены из базы»
-    не пропускает больше ни одного числа руками;
-  · ШКАЛА КЕГЛЕЙ — четыре текстовых ступени и две крупные:
-    12 / 15 / 18 / 22 и два clamp'а для крупной строки. Было девять размеров
-    в полосе 9,5–15px, пять из них с половиной пикселя, и заголовок раздела
-    (11px) был МЕНЬШЕ основного текста (13,5px). Основной текст 15px, ниже
-    15px живёт ровно один размер — капитель подписей, и она не основной
-    текст. Гейт «кегли из шкалы» не пропускает число мимо токена.
+    top в этом файле есть `calc(var(--u)*n)` при целом n или ноль. Ритм
+    направления — восьмёрка, то есть чётные n; нечётные оставлены тем местам,
+    где подпись прижимается к своей величине;
+  · ШКАЛА КЕГЛЕЙ — четыре текстовых ступени и две крупные: 12 / 15 / 18 / 22
+    и два clamp-а. Ниже 15px живёт ровно один размер — капитель подписей.
 """
 
 
@@ -103,345 +99,328 @@ def strip_comments(css):
 
 CSS = r"""
 :root{
-  /* столешница, бумага бирки, две краски */
-  --surface:#8e9488;
+  /* Бумага и краска. Столешницы в этом направлении НЕТ: страница и есть
+     лист, поэтому --surface и --stock объявлены одним значением. Оба имени
+     сохранены: их спрашивает гейт контраста, и «фон под листом» остаётся
+     самостоятельной ролью, даже когда совпадает с бумагой. */
+  --surface:#ffffff;
   --stock:#ffffff;
-  --ink:#15170f;
-  --ink2:#5d6155;
-  /* ЧЕТЫРЕ ВЕСА ЛИНЕЙКИ, и каждый живёт на СВОЁМ фоне. Волосяная — на
-     бумаге, кромка листа — на столешнице, перфорация — на бумаге и громче
-     всех. Одна альфа не может дать 3:1 на двух фонах: при .24 линия давала
-     1,69:1 на бумаге и 1,50:1 на столешнице, то есть вся структура полей
-     была нарисована ниже графического минимума в обеих темах. */
-  --hair:rgba(21,23,15,.48);
-  --edge:rgba(21,23,15,.70);
-  --tear:rgba(21,23,15,.82);
-  --heavy:#15170f;
+  --ink:#10131b;
+  --ink2:#5f6577;
 
-  /* ОДИН сигнал. Всегда заливка. Одинаков в обеих темах */
-  --signal:#d9f000;
-  --on-signal:#15170f;
-  --sig-cap:rgba(21,23,15,.62);
-  --sig-hair:rgba(21,23,15,.55);
+  /* ТРИ ВЕСА ЛИНЕЙКИ. --tear носит имя прежнего главного приёма и остаётся
+     САМОЙ ГРОМКОЙ линией системы: 7px наверху страницы и 2px под ответом.
+     --hair и --edge — тихая линия реестра, и она обязана держать 3:1. */
+  --hair:#8b92a3;
+  --edge:#8b92a3;
+  --tear:#10131b;
+  --heavy:#10131b;
 
-  --cond:"Arial Narrow","Helvetica Neue Condensed","Liberation Sans Narrow","Nimbus Sans Narrow",Arial,system-ui,sans-serif;
-  --wide:Arial,"Helvetica Neue",system-ui,sans-serif;
+  /* ОДИН сигнал, и он КРАСКА. Означает ровно одно: дата, посчитанная из
+     названного дня. До ввода сигнала на странице нет. */
+  --signal:#2b31d8;
+
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 
   /* ЕДИНСТВЕННАЯ единица отступа и всё, что из неё выведено */
   --u:4px;
-  --pad:calc(var(--u)*3);
-  --rad:calc(var(--u)*2);
-  --tag:520px;
+  --pad:calc(var(--u)*4);
+  --rad:calc(var(--u)*3);
+  --tag:1080px;
 
-  /* ШКАЛА КЕГЛЕЙ. Четыре текстовых ступени, шаг не меньше 20%, и две
-     крупные строки. Ниже 15px живёт только капитель подписей. */
+  /* ШКАЛА КЕГЛЕЙ. Ниже 15px живёт только капитель подписей. */
   --f1:12px;
   --f2:15px;
   --f3:18px;
   --f4:22px;
-  --d1:clamp(30px,9.4vw,46px);
-  --d2:clamp(21px,6vw,29px);
+  --d1:clamp(34px,9vw,60px);
+  --d2:clamp(21px,5.6vw,29px);
 
-  /* Родные контролы следуют теме страницы. Прежде :root не объявлял схему
-     вовсе, и в тёмной теме календарный значок в корешке рисовался светлым
-     контролом по почти чёрной бумаге — как и полоса прокрутки. */
   color-scheme:light dark;
 }
 
 @media (prefers-color-scheme:dark){
   :root{
-    --surface:#060704;
-    --stock:#15170f;
-    --ink:#f1f2ea;
-    --ink2:#969c88;
-    --hair:rgba(241,242,234,.38);
-    --edge:rgba(241,242,234,.44);
-    --tear:rgba(241,242,234,.78);
-    --heavy:#f1f2ea;
+    --surface:#0c0e13;
+    --stock:#0c0e13;
+    --ink:#e9ebf2;
+    --ink2:#979db0;
+    --hair:#5a6272;
+    --edge:#5a6272;
+    --tear:#e9ebf2;
+    --heavy:#e9ebf2;
+    --signal:#98a0ff;
   }
 }
 
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
+/* Полоса 7px — САМ ПРЕДМЕТ: единственное, что рисуется во всю ширину окна.
+   Она нарисована кромкой body, а не элементом: узел без текста ломает
+   правила «последний теряет линию», как уже случилось с 540 невидимыми
+   рекламными местами на соседнем сайте. */
 body{
-  margin:0;padding:calc(var(--u)*2);min-height:100vh;
+  margin:0;padding:calc(var(--u)*5);min-height:100vh;
+  border-top:7px solid var(--tear);
   background:var(--surface);color:var(--ink);
-  font-family:var(--cond);font-stretch:condensed;font-size:var(--f2);
-  font-variant-numeric:tabular-nums;line-height:1.25;
+  font-family:var(--sans);font-size:var(--f2);
+  font-variant-numeric:tabular-nums;line-height:1.45;
 }
 h1,h2,h3,p,ul,ol,form,figure{margin:0;padding:0}
 ul{list-style:none}
 a{color:inherit}
-/* Кольцо фокуса рисуется КРАСКОЙ, а не сигналом: сигнал не меняется от темы
-   и на белой бумаге давал 1,28:1 — то есть на светлой теме клавиатурный
-   фокус был невидим на каждой ссылке и каждом поле сайта. Краска флипается
-   вместе с темой (18,1:1 и 16,0:1), а сигнал остаётся ореолом. Внутри
-   флуоресцентного поля кольцо снова становится тёмным: светлая краска на
-   лайме — это 1,13:1. */
-:focus-visible{outline:3px solid var(--heavy);outline-offset:2px;
-  box-shadow:0 0 0 6px var(--signal)}
-.hot :focus-visible{outline-color:var(--on-signal);box-shadow:none}
-@media (min-width:600px){body{padding:calc(var(--u)*6)}}
+/* Кольцо фокуса — КРАСКОЙ, а не сигналом: 18,6:1 на светлой бумаге и
+   16,2:1 на тёмной. Сигналом его красить нельзя, хотя контраста хватает:
+   кольцо обходит КАЖДУЮ ссылку страницы, и сигнал получил бы второе
+   занятие — «сюда можно нажать» вместо «вот посчитанная величина». Одно
+   исключение, которое исключением не является: подчёркивание поля ввода при
+   фокусе остаётся сигнальным, потому что поле — это место, ОТКУДА берётся
+   та самая дата, то есть та же работа. */
+:focus-visible{outline:3px solid var(--heavy);outline-offset:2px}
+@media (min-width:600px){body{padding:calc(var(--u)*8)}}
 
 .skip{position:static;display:block;width:1px;height:1px;overflow:hidden;
   white-space:nowrap;background:var(--stock);color:var(--ink)}
-.skip:focus-visible{width:auto;height:auto;padding:calc(var(--u)*2) var(--pad)}
+.skip:focus-visible{width:auto;height:auto;padding:calc(var(--u)*2) 0}
 
-/* ------------------------------------------------------------- лист */
-.sheet{max-width:var(--tag);margin:0 auto;background:var(--stock);
-  border:1px solid var(--edge);border-radius:var(--rad);overflow:hidden}
-/* ДВЕ КОЛОНКИ с 1024px, а не с 900. Между 900 и 1024 корешок сжимался до
-   332px, и в него не влезала ни одна настоящая рекламная единица.
+/* --------------------------------------------------------- полоса набора */
+/* Лист не рисуется ничем: ни фона, ни рамки, ни тени. Предмет на этой
+   странице один — прибор, и обводить его значило бы завести вторую рамку
+   там, где рамка означает ввод. */
+.sheet{max-width:var(--tag);margin:0 auto}
 
-   Три вещи, которые здесь чинятся разом:
-   · `align-items:start` — колонка бирки кончается вместе с содержимым.
-     Прежде сетка тянула её до высоты корешка: 520px белого на 1400px вниз;
-   · бирка и корешок становятся ДВУМЯ предметами на столешнице, каждый со
-     своей кромкой. Пустоты под биркой больше нет — под ней стол;
-   · перфорация НЕ ИСЧЕЗАЕТ. Прежде выше 900px весь приём сводился к
-     `border-right:2px dashed` при 1,69:1, то есть на экране, с которого
-     приходит десктопный посетитель, отрывного корешка просто не было.
-     Теперь это настоящая насечка: столбик штрихов --tear (10:1) высотой в
-     бирку, нарисованный фоном, а не подложенным вручную элементом. */
+/* С 1024px появляется ВТОРОЙ вертикальный край — колонка рельсы. Больше
+   колонок не заводится: текст и реестр остаются одной колонкой, потому что
+   прибор с двумя колонками ответа перестаёт быть прибором. */
 @media (min-width:1024px){
-  .sheet{max-width:1120px;display:grid;align-items:start;
-    grid-template-columns:var(--tag) minmax(320px,1fr);
-    grid-template-rows:auto 1fr;
-    background:none;border:0;border-radius:0;overflow:visible}
-  .label{grid-column:1;grid-row:1;
-    background-color:var(--stock);border:1px solid var(--edge);
-    border-right:0;border-radius:var(--rad) 0 0 var(--rad);
-    background-image:repeating-linear-gradient(to bottom,
-      var(--tear) 0 calc(var(--u)*2),transparent calc(var(--u)*2) calc(var(--u)*4));
-    background-repeat:no-repeat;background-position:100% 0;
-    background-size:3px 100%}
-  .sheet > .ad{grid-column:1;grid-row:2}
-  .stub{grid-column:2;grid-row:1/span 2;
-    background-color:var(--stock);border:1px solid var(--edge);
-    border-radius:0 var(--rad) var(--rad) 0}
+  .sheet{display:grid;align-items:start;
+    grid-template-columns:minmax(0,1fr) 300px;
+    column-gap:calc(var(--u)*10)}
+  .label{grid-column:1;grid-row:1}
+  .perf{grid-column:1;grid-row:2}
+  .stub{grid-column:1;grid-row:3}
+  .sheet > .ad{grid-column:2;grid-row:1/span 3}
 }
 
-/* --------------------------------------------------------- кромка */
+/* ------------------------------------------------------------ марка */
 .strip{display:flex;flex-wrap:wrap;justify-content:space-between;
-  align-items:center;
-  gap:calc(var(--u)*2);padding:calc(var(--u)*2) var(--pad);
-  border-bottom:3px solid var(--heavy);
-  font-size:var(--f1);letter-spacing:.16em;text-transform:uppercase;
-  font-weight:700}
+  align-items:baseline;gap:var(--u) calc(var(--u)*4);
+  padding:0 0 calc(var(--u)*3);
+  font-size:var(--f1);letter-spacing:.18em;text-transform:uppercase;
+  font-weight:600;color:var(--ink2)}
 .mark{display:flex;align-items:center;gap:calc(var(--u)*2)}
-.mark a{text-decoration:none}
+.mark a{text-decoration:none;border-bottom:1px solid var(--hair)}
+.mark a:hover{border-bottom-color:var(--ink)}
 .strip svg{display:block}
-.src{color:var(--ink2);letter-spacing:.06em;text-align:right}
+.src{color:var(--ink2);letter-spacing:.14em;text-align:right}
 
-/* --------------------------------------------------- поля бланка */
-.field{padding:calc(var(--u)*2) var(--pad);border-bottom:1px solid var(--hair)}
+/* ------------------------------------------------------- поле и подпись */
+.field{padding:calc(var(--u)*4) 0;border-bottom:1px solid var(--hair)}
 .cap{font-size:var(--f1);letter-spacing:.16em;text-transform:uppercase;
-  font-weight:700;color:var(--ink2);margin-bottom:var(--u)}
-/* КРУПНАЯ СТРОКА и её же уменьшенная ступень. Ступень выбирается НЕ по числу
-   знаков, а расчётом ширины строки в Arial (узкого шрифта на телефоне нет) —
-   см. fit_display ниже. Прежний сторож `len(name) > 48` пропускал вторую по
-   высоте страницу сайта и ужимал те, которым это было не нужно. */
-.item{font-size:var(--d1);font-weight:700;text-transform:uppercase;
-  letter-spacing:.005em;line-height:1.02}
+  font-weight:600;color:var(--ink2);margin-bottom:calc(var(--u)*2)}
+/* Имя НЕ прописными. Капитель здесь принадлежит подписи, и имя, набранное
+   тем же приёмом, читалось бы подписью к самому себе. Ступень кегля
+   выбирается расчётом ширины строки, а не числом знаков — см. fit_display. */
+.item{margin:var(--u) 0;font-size:var(--d1);font-weight:800;
+  letter-spacing:-.04em;line-height:1.02}
 .item.long{font-size:var(--d2)}
-/* Слова запроса вокруг имени: «HOW LONG DOES / MILK / LAST IN THE FRIDGE?».
-   Крупной строкой остаётся имя — вопрос, набранный тем же кеглем, добавил бы
-   к первому экрану ещё три строки заглавных. */
-.ask{display:block;font-size:var(--f1);letter-spacing:.16em;font-weight:700;
-  color:var(--ink2);line-height:1.25}
-.dur{font-size:var(--d1);font-weight:700;text-transform:uppercase;
-  letter-spacing:.005em;line-height:1.02}
-.dur.long{font-size:var(--d2)}
-.sub{margin-top:var(--u);font-size:var(--f1);letter-spacing:.14em;
-  text-transform:uppercase;font-weight:700;color:var(--ink2)}
+/* Слова запроса вокруг имени: «How long does / MILK / last in the fridge?».
+   Прописные — ПОДПИСЬ ПОЛЯ и ничто другое. Первый прогон одел капителью и
+   запрос, и отсчёт, и оговорку: на экране телефона вышло семь строк
+   прописных против двух величин, то есть подпись стала основным текстом, а
+   два регистра — одним. Здесь и ниже прописными остаются только те строки,
+   которые НАЗЫВАЮТ соседнюю величину.
 
-/* ------------- единственное флуоресцентное поле: ОТВЕТ ЭТОЙ СТРАНИЦЫ */
-/* Линия под сигнальным полем — краской ПО СИГНАЛУ, а не темой: `--heavy`
-   в тёмной теме становится светлым и давал 1,13:1 по лайму, то есть самая
-   жирная линия системы исчезала ровно там, где она закрывает ответ. */
-.hot{background:var(--signal);color:var(--on-signal);
-  padding:calc(var(--u)*3) var(--pad);border-bottom:3px solid var(--on-signal)}
-.hot .cap,.hot .sub{color:var(--sig-cap)}
-/* Что окно ЗНАЧИТ — на первом экране, строкой бланка, а не прозой. Одна
-   оговорка на 221 странице служила двум противоположным последствиям, и
-   правильное слово стояло за перфорацией, куда с телефона не доходят. */
-.means{margin-top:calc(var(--u)*2);padding-top:calc(var(--u)*2);
-  border-top:1px solid var(--sig-hair);
-  font-size:var(--f1);letter-spacing:.14em;text-transform:uppercase;
-  font-weight:700;color:var(--on-signal)}
-.dateline{display:flex;flex-wrap:wrap;align-items:center;
-  gap:var(--u) calc(var(--u)*2);
-  margin-top:calc(var(--u)*2);padding-top:calc(var(--u)*2);
-  border-top:1px solid var(--sig-hair)}
-.dateline label{font-size:var(--f1);letter-spacing:.16em;
-  text-transform:uppercase;font-weight:700;color:var(--sig-cap)}
+   `letter-spacing:normal` — НЕ УКРАШЕНИЕ, А ПОГАШЕНИЕ НАСЛЕДСТВА. Трекинг
+   наследуется ВЫЧИСЛЕННОЙ АБСОЛЮТНОЙ длиной, а не долей кегля: -.04em,
+   посчитанные на `.item` при её собственных 60px, приходят сюда как -2.4px,
+   и для кегля 15px это -0.16em — пробел между словами схлопывается, и
+   посетитель читает «Howlongdoes lastinthefridge». Замерено в браузере:
+   ширина строки 68,9px против 100,1px при нормальном трекинге, то есть
+   -31%. Дефект стоял на ПЕРВОЙ строке всех 295 карточек товара — на самом
+   вопросе, ради ответа на который человек пришёл из поиска, — и завёлся он
+   ровно при переверстке, когда вопрос переехал ВНУТРЬ h1 и утащил за собой
+   дисплейный трекинг. Соседняя `.sub` того же кегля 15px стоит СЕСТРОЙ h1,
+   наследства не получает и набрана верно — она и была контролем.
+
+   Правило, которое из этого следует и которое проверяется гейтом: потомок
+   блока с отрицательным трекингом, объявляющий СВОЙ кегль, обязан объявить
+   и свой трекинг. */
+.ask{display:block;font-size:var(--f2);font-weight:400;color:var(--ink2);
+  letter-spacing:normal;line-height:1.4}
+/* ВТОРОЕ окно набирается МЕНЬШЕ ответа. Равный кегль делал два числа
+   равноправными, и взгляд ловил нижнее — ровно та ошибка, ради которой
+   порядок полей на прежней бирке уже однажды переставляли. */
+.dur{font-size:var(--d2);font-weight:800;letter-spacing:-.03em;
+  line-height:1.05}
+.dur.long{font-size:var(--f4)}
+.sub{margin-top:calc(var(--u)*2);font-size:var(--f2);font-weight:400;
+  color:var(--ink2)}
+
+/* ----------------------------------------------- ВВОД: единственная рамка */
+/* Поле даты стоит ВЫШЕ ответа. Рамка означает «сюда пишут», и носят её
+   только два элемента на сайте: это поле и поле поиска. */
+.dateline{display:flex;flex-wrap:wrap;align-items:baseline;
+  gap:var(--u) calc(var(--u)*4);
+  margin-top:calc(var(--u)*4);
+  padding:calc(var(--u)*3) var(--pad);
+  border:2px solid var(--heavy);border-radius:var(--rad)}
+.dateline label{width:100%;font-size:var(--f1);letter-spacing:.16em;
+  text-transform:uppercase;font-weight:600;color:var(--ink2)}
 .dateline input{flex:1 1 130px;min-width:0;background:transparent;border:0;
-  border-bottom:3px solid var(--on-signal);color:var(--on-signal);
-  color-scheme:light;font-family:var(--cond);font-stretch:condensed;
-  font-weight:700;font-size:var(--f4);line-height:1.2;
-  padding:0 0 var(--u);border-radius:0}
-/* Кольцо фокуса НЕ гасится: `outline:none` оставлял полю единственным
-   признаком фокуса утолщение подчёркивания на два пикселя. Утолщение
-   остаётся, кольцо возвращается. */
-.dateline input:focus{border-bottom-width:5px}
-.out{margin-top:calc(var(--u)*2);font-size:var(--f3);font-weight:700;
-  text-transform:uppercase;letter-spacing:.01em}
-.out small{display:block;font-size:var(--f1);letter-spacing:.14em;
-  font-weight:700;color:var(--sig-cap);margin-bottom:var(--u)}
+  border-bottom:2px solid var(--hair);color:var(--ink);
+  font-family:var(--sans);font-weight:700;font-size:var(--d2);
+  letter-spacing:-.02em;line-height:1.2;padding:0 0 var(--u);border-radius:0}
+.dateline input:focus{border-bottom-color:var(--signal)}
+
+/* ------------------------------------------------ ОТВЕТ: та же ячейка */
+/* До ввода здесь стоит срок словами источника, после — дата сигнальным
+   цветом, и подпись над ней из «Use by» становится обратным отсчётом.
+   Класс `on` вешает скрипт: цвет — это утверждение «посчитано из вашего
+   дня», и вешать его на разметку, пока дня нет, значило бы соврать. */
+.hot{padding:calc(var(--u)*5) 0;border-bottom:1px solid var(--hair)}
+.out{font-size:var(--d1);font-weight:800;letter-spacing:-.035em;
+  line-height:1.02}
+.out.on{color:var(--signal)}
+.out small{display:block;font-size:var(--f1);letter-spacing:.16em;
+  text-transform:uppercase;font-weight:600;color:var(--ink2);
+  margin-bottom:calc(var(--u)*2)}
+/* Что окно ЗНАЧИТ — на первом экране, подписью, а не прозой. Одна оговорка
+   на 221 странице служила двум противоположным последствиям, и правильное
+   слово стояло ниже, куда с телефона не доходят. */
+.means{margin-top:calc(var(--u)*4);padding-left:calc(var(--u)*3);
+  border-left:2px solid var(--hair);
+  font-size:var(--f2);font-weight:400;color:var(--ink2)}
 
 /* ----------------------------------------- во сколько раз дешевле */
-/* Кратность стоит НИЖЕ перфорации. Она не ответ, а сравнение: на бирке она
-   съедала 72–150px первого экрана телефона на каждой странице товара. */
-.cost{display:flex;align-items:baseline;gap:calc(var(--u)*3);
-  padding:var(--pad);border-bottom:1px solid var(--hair)}
-.x{font-size:var(--d2);font-weight:700;line-height:1.02}
-.t{font-size:var(--f1);letter-spacing:.13em;text-transform:uppercase;
-  font-weight:700}
-/* Без nowrap: строка расчёта уезжала за обрезанный край листа на пяти
-   страницах при 320px, и ни один гейт этого не видел — переполнения
-   документа не возникало. */
+.cost{display:flex;align-items:baseline;gap:calc(var(--u)*4);
+  padding:calc(var(--u)*5) 0;border-bottom:1px solid var(--hair)}
+.x{font-size:var(--d2);font-weight:800;letter-spacing:-.035em;line-height:1}
+.t{font-size:var(--f1);letter-spacing:.14em;text-transform:uppercase;
+  font-weight:600;color:var(--ink2)}
 .calc{display:block;margin-top:var(--u);font-size:var(--f1);
   letter-spacing:.1em;color:var(--ink2)}
 
-/* ------------------------------------------------------ перфорация */
-/* САМЫЙ ГРОМКИЙ приём облика набирался САМЫМ ТИХИМ в системе: 9,5px по
-   --ink2 на пунктире --hair. Теперь это ступень капители по краске и линии
-   --tear в 10:1 — то, чем сайт назван, видно с вытянутой руки. */
-.perf{display:flex;align-items:center;justify-content:center;
-  gap:calc(var(--u)*2);padding:calc(var(--u)*3) var(--pad);
-  border-top:2px dashed var(--tear);border-bottom:2px dashed var(--tear);
-  font-size:var(--f1);letter-spacing:.24em;text-transform:uppercase;
-  font-weight:700;color:var(--ink)}
-@media (min-width:1024px){.perf{display:none}}
+/* ------------------------------------------- граница «ответ кончился» */
+/* Здесь стоит подпись, называющая то, что ниже: выше границы страница
+   ОТВЕЧАЕТ, ниже — показывает, как ответ посчитан.
 
-/* --------------------------------------------------------- корешок */
-.stub{padding:0 0 calc(var(--u)*2)}
-.stub section{padding:var(--pad);border-bottom:1px solid var(--hair)}
+   ЧЕМ ЭТО ДЕРЖИТСЯ НА САМОМ ДЕЛЕ. Прежний облик писал здесь, что правило
+   «над этой линией нет ни одного предложения прозы» проверяется гейтом.
+   Такого гейта нет: есть `g_label_fits_one_screen`, и он считает ВЫСОТУ, а
+   не наличие прозы. Описанный и несуществующий рычаг хуже отсутствующего —
+   на него рассчитывают, — поэтому здесь сказано как есть: выше границы
+   абзацев нет по построению (label_fields печатает только поля), а стоит
+   на страже бюджет первого экрана. */
+.perf{margin-top:calc(var(--u)*6);padding:calc(var(--u)*6) 0 0;
+  border-top:2px solid var(--tear);
+  font-size:var(--f1);letter-spacing:.2em;text-transform:uppercase;
+  font-weight:600;color:var(--ink2)}
+
+/* ---------------------------------------------------------- разбор */
+.stub{padding:0 0 calc(var(--u)*4)}
+.stub section{padding:calc(var(--u)*6) 0;border-bottom:1px solid var(--hair)}
 .stub section:last-of-type{border-bottom:0}
-/* Заголовок раздела БОЛЬШЕ основного текста. Прежде 11px против 13,5px:
-   раздел читался как подпись под тем, что он возглавляет. */
-.stub h2{font-size:var(--f3);letter-spacing:.06em;text-transform:uppercase;
-  font-weight:700;margin-bottom:calc(var(--u)*2)}
-.stub p{font-family:var(--wide);font-stretch:normal;font-size:var(--f2);
-  line-height:1.6;max-width:64ch;overflow-wrap:anywhere}
-.stub p + p{margin-top:calc(var(--u)*2)}
+/* Заголовок раздела — единственное усиление между капителью и крупной
+   строкой, и он НЕ прописными: капитель занята подписями. */
+.stub h2{font-size:var(--f4);font-weight:700;letter-spacing:-.02em;
+  margin-bottom:calc(var(--u)*3)}
+.stub p{font-size:var(--f2);line-height:1.6;max-width:68ch;
+  overflow-wrap:anywhere}
+.stub p + p{margin-top:calc(var(--u)*3)}
 .quiet{color:var(--ink2)}
-/* Слова источника. НЕ величина: 34 подсказки длиной до 321 знака стояли в
-   колонке значений и набирались капсом по правому краю. Здесь они проза —
-   по левому краю, обычным регистром, с отбивкой от соседней. */
-.tip{border-left:2px solid var(--hair);padding-left:calc(var(--u)*2)}
-.tip b{font-family:var(--cond);font-stretch:condensed;letter-spacing:.06em;
-  text-transform:uppercase;font-size:var(--f1);color:var(--ink2)}
+.tip{border-left:2px solid var(--hair);padding-left:calc(var(--u)*3)}
+.tip b{font-size:var(--f1);letter-spacing:.14em;text-transform:uppercase;
+  font-weight:600;color:var(--ink2)}
 
-/* ---------------------------------------- второй отсчёт в корешке */
-.second{display:flex;flex-wrap:wrap;align-items:center;
-  gap:var(--u) calc(var(--u)*2);
-  margin-top:calc(var(--u)*2);padding-top:calc(var(--u)*2);
-  border-top:1px solid var(--hair)}
-.second label{font-size:var(--f1);letter-spacing:.16em;
-  text-transform:uppercase;font-weight:700;color:var(--ink2)}
+/* ------------------------------------- второй отсчёт: своё поле даты */
+.second{display:flex;flex-wrap:wrap;align-items:baseline;
+  gap:var(--u) calc(var(--u)*4);
+  margin-top:calc(var(--u)*4);
+  padding:calc(var(--u)*3) var(--pad) calc(var(--u)*4);
+  border:2px solid var(--heavy);border-radius:var(--rad)}
+.second label{width:100%;font-size:var(--f1);letter-spacing:.16em;
+  text-transform:uppercase;font-weight:600;color:var(--ink2)}
 .second input{flex:1 1 130px;min-width:0;background:transparent;border:0;
-  border-bottom:2px solid var(--ink);color:var(--ink);
-  font-family:var(--cond);font-stretch:condensed;font-weight:700;
-  font-size:var(--f4);padding:0 0 var(--u);border-radius:0}
-.second input:focus{border-bottom-width:4px}
-.rv small{display:block;font-size:var(--f1);letter-spacing:.14em;
-  font-weight:700;color:var(--ink2);margin-bottom:var(--u)}
+  border-bottom:2px solid var(--hair);color:var(--ink);
+  font-family:var(--sans);font-weight:700;font-size:var(--d2);
+  letter-spacing:-.02em;padding:0 0 var(--u);border-radius:0}
+.second input:focus{border-bottom-color:var(--signal)}
 
-/* ------------------------------ строки бланка вместо таблиц */
-/* Заголовок группы: у продукта под одним именем источник держит несколько
-   состояний с РАЗНЫМИ сроками, и каждое обязано быть названо. Без имени
-   страница врёт: три окна подряд без подписи читаются как одно. */
-.kind{margin-top:calc(var(--u)*3);font-size:var(--f2);letter-spacing:.06em;
-  text-transform:uppercase;font-weight:700;padding-bottom:var(--u);
-  border-bottom:1px solid var(--heavy)}
-.rows{margin-top:var(--u)}
-/* `align-items:start`, а не baseline: справа стоит величина, которая
-   переносится, и по первой базовой линии выравнивались только ПЕРВЫЕ строки
-   колонок — правая свисала ниже, и пунктир переставал читаться строкой. */
-.rows li{display:flex;align-items:start;justify-content:space-between;
-  gap:calc(var(--u)*3);padding:calc(var(--u)*2) 0;
-  border-bottom:1px dotted var(--hair)}
+/* ------------------------------ РЕЕСТР: ДВА ВЕРТИКАЛЬНЫХ КРАЯ */
+/* Единственная сетка направления, и она одна на таблицу продукта, рейтинг и
+   находки поиска: имя по левому краю, величина по правому. С 640px колонка
+   величины фиксирована (18rem) — иначе «правый край» гулял бы от страницы к
+   странице вслед за длиной имени, и краёв стало бы столько же, сколько
+   страниц. Ниже 640px колонки складываются в одну, и величина остаётся под
+   именем по ЛЕВОМУ краю: правый край на телефоне держать нечем. */
+.kind{margin-top:calc(var(--u)*6);font-size:var(--f3);font-weight:700;
+  letter-spacing:-.015em;padding-bottom:calc(var(--u)*2);
+  border-bottom:2px solid var(--heavy)}
+.rows{margin-top:0}
+.rows li,.near a,.res a{display:grid;grid-template-columns:1fr;
+  gap:var(--u);padding:calc(var(--u)*3) 0;text-decoration:none}
+.rows li{border-bottom:1px solid var(--hair)}
 .rows li:last-child{border-bottom:0}
 .rk{font-size:var(--f1);letter-spacing:.14em;text-transform:uppercase;
-  font-weight:700;color:var(--ink2)}
-.rv{font-size:var(--f2);font-weight:700;text-transform:uppercase;
-  letter-spacing:.02em;text-align:right}
+  font-weight:600;color:var(--ink2)}
+.rv{font-size:var(--f3);font-weight:700;letter-spacing:-.015em}
+.rv.on{color:var(--signal)}
+.rv small{display:block;font-size:var(--f1);letter-spacing:.16em;
+  text-transform:uppercase;font-weight:600;color:var(--ink2);
+  margin-bottom:var(--u)}
 
-/* ------------------------------------------------- соседи и поиск */
-.near li{border-bottom:1px dotted var(--hair)}
-.near li:last-child{border-bottom:0}
-.near a{display:flex;align-items:start;justify-content:space-between;
-  gap:calc(var(--u)*3);padding:calc(var(--u)*2) 0;text-decoration:none}
-.near a:hover .n,.near a:focus .n{text-decoration:underline}
-.n{font-size:var(--f2);font-weight:700;text-transform:uppercase;
-  letter-spacing:.02em}
-/* ВЕЛИЧИНА — это величина, а не предложение. «60 times longer frozen than
-   the sealed fridge (6 days to 12 months)» в колонке значений — 44 знака,
-   которые ломали строку бланка пополам. Число стоит величиной, оговорка
-   уезжает строкой ниже. */
-.v{font-size:var(--f1);letter-spacing:.12em;text-transform:uppercase;
-  font-weight:700;color:var(--ink2);text-align:right;flex:0 1 auto;
-  max-width:52%}
-.v small{display:block;font-size:var(--f1);letter-spacing:.06em;
-  font-weight:400;text-transform:none;margin-top:var(--u)}
-/* ВЕДУЩАЯ СТРОКА РЕЙТИНГА — это ответ, который даёт витрина, и она помечена
-   тем же сигналом, что и связывающее окно на бирке. Прежде на шестнадцати
-   витринах не было ни одного лаймового пятна: страницы выглядели другим,
-   более простым продуктом. */
-.near[data-lead] li:first-child a{background:var(--signal);
-  color:var(--on-signal);padding-left:var(--u);padding-right:var(--u)}
-.near[data-lead] li:first-child .v{color:var(--sig-cap)}
+/* ------------------------------------------ соседи, рейтинги, находки */
+.near li,.res li{border-bottom:1px solid var(--hair)}
+.near li:last-child,.res li:last-child{border-bottom:0}
+.near a:hover .n,.near a:focus .n,.res a:hover .n{text-decoration:underline}
+.n{font-size:var(--f3);font-weight:700;letter-spacing:-.015em}
+/* ВЕЛИЧИНА — это величина, а не предложение: оговорка уезжает строкой ниже
+   обычным начертанием. */
+.v{font-size:var(--f2);font-weight:600;letter-spacing:-.005em}
+.v small{display:block;font-size:var(--f1);font-weight:400;
+  color:var(--ink2);margin-top:var(--u)}
+/* ВЕДУЩАЯ СТРОКА РЕЙТИНГА — ответ, который даёт витрина, и помечена она тем
+   же сигналом и тем же способом, что ответ на странице товара. */
+.near[data-lead] li:first-child .n{font-size:var(--f4)}
+.near[data-lead] li:first-child .v{font-size:var(--f3);color:var(--signal)}
 
-.hunt input{width:100%;background:transparent;border:0;
-  border-bottom:3px solid var(--on-signal);color:var(--on-signal);
-  color-scheme:light;font-family:var(--cond);font-stretch:condensed;
-  font-weight:700;font-size:var(--d2);text-transform:uppercase;
-  padding:0 0 var(--u);border-radius:0;margin-top:var(--u)}
-.hunt input:focus{border-bottom-width:5px}
-.hunt input::placeholder{color:var(--sig-cap)}
-/* Список находок и «ничего не нашлось» живут на ДВУХ фонах: на лайме
-   главной и на бумаге корешка любой другой страницы. Краска, годная на
-   лайме, на бумаге тёмной темы даёт 1,1:1 — поэтому по умолчанию цвета
-   бумажные, а лаймовые надеваются только внутри .hunt. */
-.res{margin-top:calc(var(--u)*2);padding-top:calc(var(--u)*2);
+/* ---------------------------------------------- поиск: вторая рамка */
+.hunt,.stub .find{margin-top:calc(var(--u)*5);
+  padding:calc(var(--u)*3) var(--pad) calc(var(--u)*4);
+  border:2px solid var(--heavy);border-radius:var(--rad)}
+.hunt input,.find input{width:100%;background:transparent;border:0;
+  border-bottom:2px solid var(--hair);color:var(--ink);
+  font-family:var(--sans);font-weight:700;font-size:var(--d2);
+  letter-spacing:-.02em;padding:0 0 var(--u);border-radius:0;
+  margin-top:calc(var(--u)*2)}
+.hunt input:focus,.find input:focus{border-bottom-color:var(--signal)}
+.hunt input::placeholder,.find input::placeholder{color:var(--ink2);
+  font-weight:400}
+.findp{margin-top:calc(var(--u)*3);font-size:var(--f2);font-weight:400;
+  color:var(--ink2)}
+.res{margin-top:calc(var(--u)*4);padding-top:calc(var(--u)*3);
   border-top:1px solid var(--hair)}
-.res li{border-bottom:1px solid var(--hair)}
-.res li:last-child{border-bottom:0}
-.res a{display:flex;align-items:start;justify-content:space-between;
-  gap:calc(var(--u)*2);padding:calc(var(--u)*2) 0;text-decoration:none}
-.res a:hover .n{text-decoration:underline}
-.res .v{color:var(--ink2)}
-.none{margin-top:calc(var(--u)*2);font-size:var(--f1);letter-spacing:.14em;
-  text-transform:uppercase;font-weight:700;color:var(--ink2)}
-.hunt .res,.hunt .res li{border-color:var(--sig-hair)}
-.hunt .res .v,.hunt .none{color:var(--sig-cap)}
+.none{margin-top:calc(var(--u)*4);font-size:var(--f2);font-weight:400;
+  color:var(--ink2)}
 
-/* ------------------------------- поиск и навигация на КАЖДОЙ странице */
-/* Поле поиска вне главной НЕ лаймовое: сигнал означает ответ ЭТОЙ страницы,
-   а на странице товара ответ — окно, а не лукап. Второе лаймовое пятно
-   стёрло бы первое на 277 страницах. */
-.stub .find{padding:var(--pad);border-bottom:1px solid var(--hair)}
-.find input{width:100%;background:transparent;border:0;
-  border-bottom:3px solid var(--heavy);color:var(--ink);
-  font-family:var(--cond);font-stretch:condensed;font-weight:700;
-  font-size:var(--d2);text-transform:uppercase;
-  padding:0 0 var(--u);border-radius:0;margin-top:var(--u)}
-.find input:focus{border-bottom-width:5px}
-.find input::placeholder{color:var(--ink2)}
-.findp{margin-top:calc(var(--u)*2);font-family:var(--cond);
-  font-stretch:condensed;font-size:var(--f1);letter-spacing:.14em;
-  text-transform:uppercase;font-weight:700;color:var(--ink2)}
-.ways{margin-top:calc(var(--u)*2);padding-top:calc(var(--u)*2);
+/* ---------------------------------------------------------- навигация */
+.ways{margin-top:calc(var(--u)*4);padding-top:calc(var(--u)*3);
   border-top:1px solid var(--hair)}
-.way{margin-top:calc(var(--u)*2);font-size:var(--f2);letter-spacing:.02em;
-  text-transform:uppercase;font-weight:700}
+.way{margin-top:calc(var(--u)*3);font-size:var(--f2);font-weight:600}
 .way:first-child{margin-top:0}
 .wcap{display:block;color:var(--ink2);font-size:var(--f1);
-  letter-spacing:.16em;margin-bottom:var(--u)}
+  letter-spacing:.16em;text-transform:uppercase;margin-bottom:var(--u)}
 
-.foot{padding:var(--pad);font-size:var(--f1);letter-spacing:.16em;
-  text-transform:uppercase;font-weight:700;color:var(--ink2)}
+.foot{padding:calc(var(--u)*6) 0 0;border-top:1px solid var(--hair);
+  font-size:var(--f2);font-weight:400;color:var(--ink2)}
+
+@media (min-width:640px){
+  .rows li,.near a,.res a{grid-template-columns:1fr 18rem;
+    gap:calc(var(--u)*2) calc(var(--u)*8);align-items:baseline}
+  .rk,.n{grid-column:1}
+  .rv,.v{grid-column:2;text-align:right}
+}
 """
 
 
@@ -452,51 +431,30 @@ a{color:inherit}
 # 1. Место существует, только когда в нём ЧТО-ТО ЕСТЬ. `display:none` не
 #    выводит узел из :last-child, и на соседнем сайте пятьсот сорок невидимых
 #    мест сломали пять правил отступов на ста пятидесяти семи страницах.
-#    Поэтому ни одно место здесь не прячется по ширине: на узком экране
-#    МЕНЯЕТСЯ ФОРМАТ, а прежний не сплющивается и не исчезает.
-# 2. Размер задан ТОЧНО, и он обязан ВЛЕЗАТЬ В СВОЙ КОНТЕЙНЕР на каждой
-#    ширине. Прежний `.ad-flow{width:728px}` жил в колонке корешка шириной
-#    439–598px и обрезался на 18–42% при `overflow:hidden` — ни один гейт
-#    этого не видел, потому что переполнения документа не возникало.
-# 3. Ответ ВЫШЕ первой рекламы на любом типе страницы. На бирке рекламы нет
-#    до последнего поля: `.ad-rail` стоит ПОСЛЕ всех полей бланка, то есть
-#    после ответа и поля даты.
-#
-# ТРИ МЕСТА:
-#   ad-rail  300x600 в боковой колонке на десктопе (та самая пустая колонка
-#            на 1400px, которую нашёл разбор облика), 320x50 на телефоне;
-#   ad-flow  336x280 в потоке корешка, ниже перфорации и ниже четырёх
-#            разделов текста;
-#   ad-lead  970x250 / 728x90 полосой во всю ширину под листом — единственное
-#            место, где колонка ДЕЙСТВИТЕЛЬНО широкая.
+# 2. Размер задан ТОЧНО и обязан ВЛЕЗАТЬ В СВОЙ КОНТЕЙНЕР на каждой ширине.
+# 3. Ответ ВЫШЕ первой рекламы на любом типе страницы: рельса стоит ПОСЛЕ
+#    границы «ответ кончился», то есть ниже поля даты и ниже самого ответа.
 AD_CSS = r"""
-/* Рамка НЕ на месте, а на своей врезке: `width:728px` с рамкой при
-   border-box даёт креатив 726px, то есть объявленную единицу, отрисованную
-   на два пикселя меньше. Место — ровно объявленный прямоугольник. */
 .ad{overflow:hidden;display:flex;align-items:stretch;margin:0 auto}
-.sheet > .ad{margin:calc(var(--u)*3) auto}
-.stub .ad{margin:0 auto calc(var(--u)*3)}
-.adband{max-width:1120px;margin:0 auto;padding-top:calc(var(--u)*3)}
+.sheet > .ad{margin:calc(var(--u)*6) auto}
+.stub .ad{margin:0 auto calc(var(--u)*6)}
+.adband{max-width:var(--tag);margin:0 auto;padding-top:calc(var(--u)*6)}
 .house{display:flex;flex-direction:column;justify-content:center;
-  gap:var(--u);width:100%;padding:calc(var(--u)*2) calc(var(--u)*3);
+  gap:var(--u);width:100%;padding:calc(var(--u)*3) calc(var(--u)*4);
   text-decoration:none;color:var(--ink);
-  background:var(--stock);border:1px solid var(--hair)}
+  background:var(--stock);border:1px solid var(--hair);
+  border-radius:var(--rad)}
 .house:hover .hn{text-decoration:underline}
 .hcap{font-size:var(--f1);letter-spacing:.2em;text-transform:uppercase;
-  font-weight:700;color:var(--ink2)}
-.hn{font-size:var(--f3);font-weight:700;text-transform:uppercase;
-  letter-spacing:.01em}
-.hsub{font-family:var(--wide);font-stretch:normal;font-size:var(--f2);
-  line-height:1.35;color:var(--ink2)}
-/* Рельса на телефоне — полоса в 50px: она стоит В БИРКЕ, а бирка обязана
-   помещаться на один экран. Прямоугольник 280px уводил отрывную линию с 648
-   на 928 пикселей, то есть отменял главное правило облика. */
+  font-weight:600;color:var(--ink2)}
+.hn{font-size:var(--f3);font-weight:700;letter-spacing:-.015em}
+.hsub{font-size:var(--f2);line-height:1.35;color:var(--ink2)}
 .ad-rail{width:300px;height:50px}
 .ad-flow{width:300px;height:250px}
 .ad-lead{width:300px;height:250px}
 .ad-rail .house{flex-direction:row;align-items:baseline;gap:calc(var(--u)*2);
   padding:0 calc(var(--u)*2);white-space:nowrap}
-.ad-rail .hsub{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ad-rail .hsub{display:none}
 @media (min-width:360px){
   .ad-rail{width:320px;height:50px}
   .ad-flow{width:336px;height:280px}
@@ -505,18 +463,18 @@ AD_CSS = r"""
 @media (min-width:776px){
   .ad-lead{width:728px;height:90px}
   .ad-lead .house{flex-direction:row;align-items:baseline;
-    gap:calc(var(--u)*3);padding:0 calc(var(--u)*3)}
+    gap:calc(var(--u)*4);padding:0 calc(var(--u)*4)}
 }
 @media (min-width:1024px){
   .ad-rail{width:300px;height:600px}
   .ad-rail .house{flex-direction:column;align-items:flex-start;gap:var(--u);
-    padding:calc(var(--u)*3) calc(var(--u)*4);white-space:normal}
+    padding:calc(var(--u)*4) calc(var(--u)*5);white-space:normal}
+  .ad-rail .hsub{display:block}
   .ad-lead{width:970px;height:250px}
   .ad-lead .house{flex-direction:column;align-items:flex-start;
-    gap:calc(var(--u)*2);padding:calc(var(--u)*4) calc(var(--u)*5)}
+    gap:calc(var(--u)*3);padding:calc(var(--u)*5) calc(var(--u)*6)}
 }
 """
-
 
 # --------------------------------------------------------------------------
 # ЛИНЕЙКА: сколько места занимает набранная строка
@@ -904,10 +862,11 @@ def elem_height(tag, cls, attrs, inner, css, ad_css, room, vw,
 def label_height(label_html, css, ad_css="", vw=BUDGET_VW):
     """Высота бирки на экране vw. Модель обязана быть НЕ МЕНЬШЕ настоящей:
     бюджет, который занижает, пропускает страницу, не влезающую в телефон."""
-    body_pad = px_of("calc(var(--u)*2)" if vw < 600 else "calc(var(--u)*6)",
+    body_pad = px_of("calc(var(--u)*5)" if vw < 600 else "calc(var(--u)*8)",
                      css, vw)
-    sheet = min(vw - 2 * body_pad, px_of("var(--tag)", css, vw))
-    room = sheet - 2
+    # Без вычета рамки: листа с кромкой в этом направлении нет — поля стоят
+    # прямо в полосе набора, и её ширина и есть место под строку.
+    room = min(vw - 2 * body_pad, px_of("var(--tag)", css, vw))
     return sum(elem_height(t, c, a, i, css, ad_css, room, vw, ".label")
                for t, c, a, i in blocks(label_html))
 
@@ -929,12 +888,14 @@ def label_of(page_html):
 
 
 def label_room(css=None, vw=BUDGET_VW):
-    """Ширина колонки внутри поля бирки на экране vw."""
+    """Ширина колонки, в которой набирается ответ, на экране vw."""
     css = CSS if css is None else css
-    body_pad = px_of("calc(var(--u)*2)" if vw < 600 else "calc(var(--u)*6)",
+    body_pad = px_of("calc(var(--u)*5)" if vw < 600 else "calc(var(--u)*8)",
                      css, vw)
-    sheet = min(vw - 2 * body_pad, px_of("var(--tag)", css, vw))
-    return sheet - 2 - 2 * px_of("var(--pad)", css, vw)
+    # Боковой отступ поля равен нулю: единственный отступ от края экрана —
+    # отступ полосы набора, и он объявлен на body. Вычитать здесь --pad
+    # значило бы держать второй левый край, которого в облике нет.
+    return min(vw - 2 * body_pad, px_of("var(--tag)", css, vw))
 
 
 def fit_display(text, css=None, vw=BUDGET_VW):
