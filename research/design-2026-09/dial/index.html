@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeepsUntil — storage life, drawn to scale</title>
+<style>
+/* ============================================================
+   DIRECTION A — "THE DIAL"
+   A storage life is a LENGTH, not a row in a table.
+   Every ruler here is linear. Where a figure is too short to
+   see, we cut a window out of the ruler and redraw that window
+   as the next ruler down, printing the magnification.
+   No log scale, no unequal bins, no table of figures.
+
+   Ось меняется по ширине: на телефоне время идёт ВНИЗ (метки
+   не сталкиваются и подписи читаются), с 720px — слева направо.
+   Позиция метки задаётся --p в процентах ОТ ДЛИНЫ ЛИНЕЙКИ.
+   ============================================================ */
+
+:root{
+  --paper:#e9e8ee;
+  --panel:#f5f4f8;
+  --ink:#17151f;
+  --ink-2:#565169;
+  --rule:#c2bfcf;
+  --rule-2:#d7d4e0;
+  --signal:#5b2ce0;
+  --signal-ink:#4a1fc4;
+  --winfill:#dcd9e6;
+  --sans:Verdana,Geneva,"DejaVu Sans",sans-serif;
+  --narrow:"Arial Narrow","Liberation Sans Narrow","Helvetica Neue Condensed",Tahoma,Verdana,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#131218;
+    --panel:#1c1b24;
+    --ink:#ecebf3;
+    --ink-2:#9d97ae;
+    --rule:#3a3748;
+    --rule-2:#2a2834;
+    --signal:#a98bff;
+    --signal-ink:#c2acff;
+    --winfill:#24222f;
+  }
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font:14px/1.6 var(--sans);letter-spacing:-.005em;
+}
+@media (min-width:960px){ body{font-size:15px} }
+a{color:var(--ink);text-underline-offset:3px;text-decoration-thickness:1px}
+a:hover{color:var(--signal-ink)}
+
+/* ---------- instrument bands, not article sections ---------- */
+.band{border-top:1px solid var(--rule)}
+.band:first-child{border-top:0}
+.band.alt{background:var(--panel)}
+.inner{max-width:1200px;margin:0 auto;padding:1.5rem 1rem 2rem}
+@media (min-width:960px){
+  .inner{display:grid;grid-template-columns:11.5rem 1fr;gap:0 2.5rem;padding:1.9rem 2rem 2.6rem}
+  .gutter{grid-column:1;grid-row:1}
+  .main{grid-column:2;grid-row:1}
+}
+.gutter{margin:0 0 .9rem}
+.tag{font:11px/1.5 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);margin:0 0 .35rem}
+.gutter .note{font-size:11.5px;line-height:1.5;color:var(--ink-2);margin:.5rem 0 0}
+.main > :first-child{margin-top:0}
+p{margin:0 0 .8rem;max-width:62ch}
+.lede{font-size:15px;line-height:1.55;max-width:56ch}
+@media (min-width:960px){ .lede{font-size:17px} }
+
+/* ---------- masthead ---------- */
+.mast{padding-top:1.2rem}
+.wordmark{font:700 13px/1 var(--sans);letter-spacing:.34em;text-transform:uppercase;margin:0 0 1rem}
+h1{font:400 clamp(30px,8.5vw,60px)/1.02 var(--narrow);letter-spacing:-.02em;margin:0 0 .7rem;max-width:18ch}
+
+/* ---------- the ruler ---------- */
+.rung-cap{
+  display:flex;flex-wrap:wrap;gap:.2rem .9rem;align-items:baseline;
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);
+  margin:0 0 1.7rem;  /* место для плашки TODAY, она висит НАД началом линейки */
+}
+.rung-cap strong{
+  font:400 20px/1 var(--narrow);letter-spacing:0;text-transform:none;color:var(--ink);
+  font-variant-numeric:tabular-nums;
+}
+
+/* VERTICAL by default (phone): time runs down the page. */
+.track{position:relative;height:var(--h,540px);margin:0 0 3.2rem}
+.axis{position:absolute;left:3.4rem;top:0;bottom:0;width:2px;background:var(--ink)}
+.tick{position:absolute;left:0;top:var(--p);width:3.4rem;height:0}
+.tick i{position:absolute;right:0;top:0;width:.55rem;height:2px;background:var(--rule);transform:translateY(-1px)}
+.tick em{
+  position:absolute;right:.85rem;top:0;transform:translateY(-50%);
+  font:400 11px/1 var(--narrow);font-style:normal;color:var(--ink-2);
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.tick.zero em{color:var(--ink)}
+.tick,.mark,.spanbar,.spanlab,.hand{z-index:1}
+
+.mark{position:absolute;left:0;top:var(--p);right:0;height:0}
+.mark .stem{position:absolute;left:3.4rem;top:0;width:.9rem;height:2px;background:var(--ink);transform:translateY(-1px)}
+.mark .lab{
+  position:absolute;top:0;margin-top:-.35rem;
+  left:4.5rem;width:calc(100% - 4.7rem);
+  font-size:11.5px;line-height:1.35;
+}
+/* дорожки: нечётные — правая колонка, чётные — левая, чтобы соседние
+   по времени метки не наезжали друг на друга на узком экране */
+.mark.l1 .lab,.mark.l3 .lab{left:58%;width:40%}
+.mark.l2 .lab{left:4.5rem;width:calc(56% - 4.7rem)}
+/* v0: на телефоне подпись во всю ширину, а ряд под осью на десктопе остаётся
+   тот, что задан дорожкой l1..l3 (правило ниже, в медиазапросе, перекрывает) */
+.mark.v0 .lab{left:4.5rem;width:calc(100% - 4.7rem)}
+.mark .n{display:block;font:400 15px/1.1 var(--narrow);font-variant-numeric:tabular-nums;margin:0 0 .1rem}
+.mark .who{display:block;color:var(--ink-2);font-size:11px;line-height:1.35}
+.mark .who a{color:var(--ink-2)}
+/* the one signal colour: the figure that decides bin-or-keep */
+.mark.sig .stem{background:var(--signal);height:3px}
+.mark.sig .n{color:var(--signal-ink)}
+
+/* the window that the next ruler magnifies */
+.win{
+  position:absolute;left:2.5rem;top:var(--a);height:calc(var(--b) - var(--a));right:0;
+  background:var(--winfill);min-height:2px;z-index:0;
+}
+.winnote{font-size:12px;line-height:1.5;color:var(--ink-2);margin:0;max-width:64ch}
+.winnote b{font-weight:400;color:var(--ink);font-family:var(--narrow);font-size:15px;letter-spacing:0}
+.zoomer{display:none}
+
+/* HORIZONTAL from 720px up: time runs left to right. */
+@media (min-width:720px){
+  .track{height:var(--hh,190px);margin:0 0 .2rem}
+  .axis{left:0;right:0;top:34px;width:auto;height:2px}
+  .tick{left:var(--p);top:0;width:0;height:34px}
+  .tick i{right:auto;left:0;top:auto;bottom:0;width:2px;height:.5rem;transform:translateX(-1px)}
+  .tick em{right:auto;left:0;top:14px;transform:translateX(-50%)}
+  .tick.zero em{transform:none}
+  .tick.end em{transform:translateX(-100%)}
+
+  .mark{left:var(--p);top:0;right:auto;width:0;height:auto}
+  .mark .stem{left:0;top:34px;width:2px;height:26px;transform:translateX(-1px)}
+  /* ряды под осью: шаг 54px — подпись из трёх строк помещается целиком,
+     стебель тянется до своего ряда, поэтому подпись всегда читается
+     вместе со своей меткой */
+  .mark .lab{left:0;top:62px;margin-top:0;width:16rem}
+  .mark.l1 .stem,.mark.l2 .stem,.mark.l3 .stem{
+    background:linear-gradient(var(--ink) 0 26px,var(--rule) 26px);
+  }
+  .mark.l1 .stem{height:80px}
+  .mark.l1 .lab{left:0;top:116px;width:16rem}
+  .mark.l2 .stem{height:134px}
+  .mark.l2 .lab{left:0;top:170px;width:16rem}
+  .mark.l3 .stem{height:188px}
+  .mark.l3 .lab{left:0;top:224px;width:16rem}
+  .mark.end .lab{transform:translateX(-100%);text-align:right}
+  .mark .n{font-size:17px}
+
+  .win{
+    left:var(--a);top:34px;width:calc(var(--b) - var(--a));height:auto;bottom:0;right:auto;
+    min-width:2px;min-height:0;
+  }
+  .zoomer{display:block;width:100%;height:26px;fill:var(--rule-2);margin:0 0 .5rem}
+}
+
+/* ---------- readouts ---------- */
+.readouts{display:grid;gap:1.2rem}
+@media (min-width:720px){ .readouts{grid-template-columns:repeat(3,1fr);gap:1.8rem} }
+.ro{border-top:2px solid var(--ink);padding-top:.55rem}
+.ro .big{
+  display:block;font:400 clamp(34px,9vw,50px)/.95 var(--narrow);
+  font-variant-numeric:tabular-nums;letter-spacing:-.01em;margin:0 0 .3rem;
+}
+.ro.sig{border-top-color:var(--signal)}
+.ro.sig .big{color:var(--signal-ink)}
+.ro p{font-size:12px;line-height:1.5;color:var(--ink-2);margin:0;max-width:34ch}
+.ro p b{color:var(--ink);font-weight:400}
+
+.foot{font-size:11.5px;line-height:1.6;color:var(--ink-2)}
+.foot p{max-width:70ch}
+hr.hair{border:0;border-top:1px solid var(--rule-2);margin:1.2rem 0}
+</style>
+</head>
+<body>
+
+<!-- ============ MASTHEAD ============ -->
+<div class="band">
+  <div class="inner mast">
+    <div class="gutter">
+      <p class="wordmark">KeepsUntil</p>
+      <p class="note">Storage life from the public USDA FoodKeeper data, drawn as length.</p>
+    </div>
+    <div class="main">
+      <h1>How long it keeps is a distance, not a sentence.</h1>
+      <p class="lede">Two figures on the same ruler, from the same zero. Five years
+      and four days sit where they actually sit &mdash; which is the whole problem,
+      and the reason this page has more than one ruler.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ RULER 1: 0 to 5 years ============ -->
+<div class="band alt">
+  <div class="inner">
+    <div class="gutter">
+      <p class="tag">Ruler 1 of 2</p>
+      <p class="note">Zero is the day you put it away. Every food on this site
+      appears once, at the longest it can keep and the place that achieves it.</p>
+      <p class="note">In this prototype only <a href="product.html">Canned chicken</a> opens.</p>
+    </div>
+    <div class="main">
+      <div class="rung-cap"><strong>0 &ndash; 5 years</strong><span>1825 days &middot; linear &middot; full length</span></div>
+
+      <div class="track" style="--h:1100px;--hh:230px">
+        <div class="axis"></div>
+
+        <div class="tick zero" style="--p:0%"><i></i><em>0</em></div>
+        <div class="tick" style="--p:20%"><i></i><em>1 y</em></div>
+        <div class="tick" style="--p:40%"><i></i><em>2 y</em></div>
+        <div class="tick" style="--p:60%"><i></i><em>3 y</em></div>
+        <div class="tick" style="--p:80%"><i></i><em>4 y</em></div>
+        <div class="tick end" style="--p:100%"><i></i><em>5 y</em></div>
+
+        <div class="win" style="--a:0%;--b:4.93%">
+        </div>
+
+        <div class="mark" style="--p:9.86%">
+          <div class="stem"></div>
+          <div class="lab"><span class="n">180 days</span>
+            <span class="who">Bacon, fully cooked &mdash; 6 months, cupboard</span></div>
+        </div>
+
+        <div class="mark l1" style="--p:14.79%">
+          <div class="stem"></div>
+          <div class="lab"><span class="n">270 days</span>
+            <span class="who">Butter &mdash; up to 9 months, freezer</span></div>
+        </div>
+
+        <div class="mark l2 v0" style="--p:19.73%">
+          <div class="stem"></div>
+          <div class="lab"><span class="n">360 days</span>
+            <span class="who">Canned milk &middot; shelf-stable milk &mdash; cupboard.
+            Raw egg whites and yolks &mdash; freezer</span></div>
+        </div>
+
+        <div class="mark end" style="--p:100%">
+          <div class="stem"></div>
+          <div class="lab"><span class="n">1825 days</span>
+            <span class="who"><a href="product.html">Canned chicken</a> &middot;
+            canned anchovies &mdash; cupboard, unopened</span></div>
+        </div>
+      </div>
+
+      <svg class="zoomer" viewBox="0 0 1000 26" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 0 H49.3 L1000 26 H0 Z"/>
+      </svg>
+      <p class="winnote">Five more foods land in the shaded first 90 days of that
+      ruler, where nothing can be told apart. Ruler 2 is that window and nothing
+      else, redrawn <b>&times;20.3</b> larger.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ RULER 2: 0 to 90 days ============ -->
+<div class="band">
+  <div class="inner">
+    <div class="gutter">
+      <p class="tag">Ruler 2 of 2</p>
+      <p class="note">Same zero, same linear spacing. Only the length shown has
+      changed, and by a stated amount.</p>
+    </div>
+    <div class="main">
+      <div class="rung-cap"><strong>0 &ndash; 90 days</strong><span>the window above &middot; &times;20.3</span></div>
+
+      <div class="track" style="--h:1200px;--hh:285px">
+        <div class="axis"></div>
+
+        <div class="tick zero" style="--p:0%"><i></i><em>0</em></div>
+        <div class="tick" style="--p:16.67%"><i></i><em>15 d</em></div>
+        <div class="tick" style="--p:33.33%"><i></i><em>30 d</em></div>
+        <div class="tick" style="--p:50%"><i></i><em>45 d</em></div>
+        <div class="tick" style="--p:66.67%"><i></i><em>60 d</em></div>
+        <div class="tick" style="--p:83.33%"><i></i><em>75 d</em></div>
+        <div class="tick end" style="--p:100%"><i></i><em>90 d</em></div>
+
+        <div class="mark sig" style="--p:7.78%">
+          <div class="stem"></div>
+          <div class="lab"><span class="n">7 days</span>
+            <span class="who">Hard-boiled eggs &mdash; fridge. Lactose-free milk,
+            once opened &mdash; fridge</span></div>
+        </div>
+
+        <div class="mark l1" style="--p:31.11%">
+          <div class="stem"></div>
+          <div class="lab"><span class="n">28 days</span>
+            <span class="who">Uncured bacon &mdash; up to 4 weeks, freezer</span></div>
+        </div>
+
+        <div class="mark l2" style="--p:33.33%">
+          <div class="stem"></div>
+          <div class="lab"><span class="n">30 days</span>
+            <span class="who">Bacon &mdash; 1 month, freezer</span></div>
+        </div>
+
+        <div class="mark l3" style="--p:38.89%">
+          <div class="stem"></div>
+          <div class="lab"><span class="n">35 days</span>
+            <span class="who">Eggs in shell &mdash; up to 5 weeks, fridge</span></div>
+        </div>
+
+        <div class="mark end" style="--p:100%">
+          <div class="stem"></div>
+          <div class="lab"><span class="n">90 days</span>
+            <span class="who">Milk &middot; quiche &mdash; freezer.
+            Ultra-pasteurized milk &mdash; fridge</span></div>
+        </div>
+      </div>
+
+      <p class="winnote">This is as far as the zoom goes here. Short figures &mdash;
+      the three and four days a can gives you once it is open &mdash; get their own
+      ruler on the food&rsquo;s own page.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ HOW THE SCALE WORKS ============ -->
+<div class="band alt">
+  <div class="inner">
+    <div class="gutter">
+      <p class="tag">Read this once</p>
+      <p class="note">A scale that misleads is worse than a table, so here is
+      exactly what these rulers do.</p>
+    </div>
+    <div class="main">
+      <p><b>Every ruler is linear.</b> Equal distance is equal time, counted from
+      zero. Nothing is squeezed, nothing is bent, and there is no logarithmic scale
+      anywhere on this site. If a mark looks small here, it is small.</p>
+      <p><b>When a figure is too short to see, we cut a window.</b> The window is
+      shaded on the ruler it came from, redrawn full length as the next ruler
+      down, and the magnification is printed between them &mdash;
+      <span style="font-family:var(--narrow);font-size:16px">&times;20.3</span> on
+      this page. The two rulers are not the same scale and never pretend to be.</p>
+      <p><b>FoodKeeper counts a month as 30 days and a year as 365.</b> We keep the
+      source&rsquo;s arithmetic rather than our own, so a &ldquo;12 months&rdquo;
+      figure lands at 360 days &mdash; five days short of the 1-year tick above.
+      That gap belongs to the data, and we would rather show it than tidy it away.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ WHAT WE WORK OUT ============ -->
+<div class="band">
+  <div class="inner">
+    <div class="gutter">
+      <p class="tag">Not in the source</p>
+      <p class="note">FoodKeeper publishes the figures. These three come from
+      putting them on one ruler.</p>
+    </div>
+    <div class="main">
+      <div class="readouts">
+        <div class="ro">
+          <span class="big">&times;90</span>
+          <p><b>What the freezer buys.</b> Raw egg whites and yolks: 2 to 4 days in
+          the fridge, 12 months frozen. 360 &divide; 4.</p>
+        </div>
+        <div class="ro sig">
+          <span class="big">&times;456</span>
+          <p><b>What opening it costs.</b> Canned chicken: 5 years sealed in the
+          cupboard, 3 to 4 days once opened. 1825 &divide; 4 &mdash; and &times;608
+          at the shorter end. <a href="product.html">See it drawn</a>.</p>
+        </div>
+        <div class="ro">
+          <span class="big">a date</span>
+          <p><b>Not a duration.</b> Tell a food&rsquo;s page the day you stored it
+          and the ruler answers with the day it runs out, and shows where today
+          stands on the way there.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ FOOT ============ -->
+<div class="band alt">
+  <div class="inner">
+    <div class="gutter"><p class="tag">Source</p></div>
+    <div class="main foot">
+      <p>Figures: USDA FoodKeeper, public data, quoted as published. They describe
+      quality and safe home storage for an item kept at the right temperature. They
+      are not a verdict on the jar in your hand: a container that is bulging,
+      leaking or smells wrong is wrong whatever any ruler says.</p>
+      <hr class="hair">
+      <p>Design prototype, direction A &mdash; &ldquo;the dial&rdquo;. There is no
+      table of storage figures on this site; everything a table would carry is on
+      the rulers.</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

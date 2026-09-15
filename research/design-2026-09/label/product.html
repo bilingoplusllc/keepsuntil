@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Canned chicken &mdash; how long it keeps | KeepsUntil</title>
+<style>
+/* ============================================================
+   DIRECTION C — "THE LABEL ON THE JAR"
+   Above the perforation: the whole answer, one phone screen, no
+   scrolling. Below it: the stub — method, second count, neighbours.
+   One signal colour (#d9f000), always a FILL, never text on light.
+   ============================================================ */
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --surface:#8e9488;
+  --stock:#ffffff;
+  --ink:#15170f;
+  --ink2:#5d6155;
+  --hair:rgba(21,23,15,.24);
+  --heavy:#15170f;
+  --signal:#d9f000;
+  --on-signal:#15170f;
+  --sig-cap:rgba(21,23,15,.62);
+  --sig-hair:rgba(21,23,15,.34);
+  --cond:"Arial Narrow","Helvetica Neue Condensed","Liberation Sans Narrow","Nimbus Sans Narrow",Arial,system-ui,sans-serif;
+  --wide:Arial,"Helvetica Neue",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --surface:#060704;
+    --stock:#15170f;
+    --ink:#f1f2ea;
+    --ink2:#969c88;
+    --hair:rgba(241,242,234,.24);
+    --heavy:#f1f2ea;
+  }
+}
+
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--surface);
+  color:var(--ink);
+  font-family:var(--cond);
+  font-stretch:condensed;
+  font-variant-numeric:tabular-nums;
+  line-height:1.05;
+  padding:10px;
+  min-height:100vh;
+}
+@media (min-width:600px){body{padding:24px}}
+
+.sheet{
+  max-width:520px;margin:0 auto;
+  background:var(--stock);
+  border:1px solid var(--hair);
+  border-radius:7px;
+  overflow:hidden;
+}
+@media (min-width:900px){
+  .sheet{
+    max-width:1120px;
+    display:grid;grid-template-columns:520px minmax(320px,1fr);
+  }
+  .label{border-right:2px dashed var(--hair)}
+}
+
+/* ---- printed rows ---------------------------------------- */
+.strip{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:9px 14px;border-bottom:3px solid var(--heavy);
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;
+}
+.strip .mark{display:flex;align-items:center;gap:6px}
+.strip .mark a{color:inherit;text-decoration:none}
+.strip svg{display:block}
+.strip .src{color:var(--ink2);letter-spacing:.14em;text-align:right}
+
+.field{padding:10px 14px;border-bottom:1px solid var(--hair)}
+.cap{
+  font-size:11px;letter-spacing:.17em;text-transform:uppercase;font-weight:700;
+  color:var(--ink2);margin-bottom:4px;
+}
+.item{
+  font-size:clamp(30px,9.6vw,46px);font-weight:700;text-transform:uppercase;
+  letter-spacing:.005em;line-height:1;
+}
+.dur{
+  font-size:clamp(38px,12.4vw,60px);font-weight:700;text-transform:uppercase;
+  letter-spacing:.005em;line-height:.95;
+}
+.sub{
+  margin-top:4px;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  font-weight:700;color:var(--ink2);
+}
+
+/* ---- the one fluorescent field: the operative window ------ */
+.hot{
+  background:var(--signal);color:var(--on-signal);
+  padding:11px 14px 13px;border-bottom:3px solid var(--heavy);
+}
+.hot .cap{color:var(--sig-cap)}
+.hot .sub{color:var(--sig-cap)}
+.dateline{
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;
+  margin-top:9px;padding-top:9px;border-top:1px solid var(--sig-hair);
+}
+.dateline label{
+  font-size:11px;letter-spacing:.17em;text-transform:uppercase;font-weight:700;
+  color:var(--sig-cap);
+}
+.dateline input{
+  flex:1 1 130px;min-width:0;
+  background:transparent;border:0;border-bottom:3px solid var(--on-signal);
+  color:var(--on-signal);color-scheme:light;
+  font-family:var(--cond);font-stretch:condensed;font-weight:700;
+  font-size:19px;line-height:1.2;padding:0 0 2px;border-radius:0;
+}
+.dateline input:focus{outline:none;border-bottom-width:5px}
+.out{
+  margin-top:8px;font-size:clamp(21px,6.6vw,28px);font-weight:700;
+  text-transform:uppercase;letter-spacing:.01em;line-height:1.1;
+}
+.out small{
+  display:block;font-size:10.5px;letter-spacing:.16em;font-weight:700;
+  color:var(--sig-cap);margin-bottom:3px;
+}
+
+/* ---- the cost of opening --------------------------------- */
+.cost{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 14px;border-bottom:1px solid var(--hair);
+}
+.cost .x{font-size:clamp(34px,10.4vw,46px);font-weight:700;line-height:.9}
+.cost .t{
+  font-size:12px;letter-spacing:.13em;text-transform:uppercase;font-weight:700;
+  color:var(--ink);line-height:1.35;
+}
+.cost .calc{
+  display:block;margin-top:3px;font-size:10px;letter-spacing:.1em;
+  color:var(--ink2);white-space:nowrap;
+}
+
+/* ---- perforation ----------------------------------------- */
+.perf{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:11px 14px;border-top:2px dashed var(--hair);border-bottom:2px dashed var(--hair);
+  font-size:9.5px;letter-spacing:.28em;text-transform:uppercase;font-weight:700;color:var(--ink2);
+}
+@media (min-width:900px){.perf{display:none}}
+
+/* ---- stub ------------------------------------------------ */
+.stub{padding:0 0 6px}
+.stub section{padding:14px;border-bottom:1px solid var(--hair)}
+.stub section:last-of-type{border-bottom:0}
+.stub h2{
+  font-size:11px;letter-spacing:.17em;text-transform:uppercase;font-weight:700;
+  color:var(--ink2);margin-bottom:7px;
+}
+.stub p{font-family:var(--wide);font-stretch:normal;font-size:13.5px;line-height:1.5;max-width:52ch}
+.stub p + p{margin-top:8px}
+.stub .quiet{color:var(--ink2);font-size:12.5px}
+
+.second{
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;
+  margin-top:9px;padding-top:9px;border-top:1px solid var(--hair);
+}
+.second label{font-size:11px;letter-spacing:.17em;text-transform:uppercase;font-weight:700;color:var(--ink2)}
+.second input{
+  flex:1 1 130px;min-width:0;background:transparent;
+  border:0;border-bottom:2px solid var(--ink);color:var(--ink);
+  font-family:var(--cond);font-stretch:condensed;font-weight:700;font-size:18px;
+  padding:0 0 2px;border-radius:0;
+}
+.second input:focus{outline:none;border-bottom-width:4px}
+.secout{margin-top:8px;font-size:22px;font-weight:700;text-transform:uppercase;line-height:1.15}
+.secout small{display:block;font-size:10.5px;letter-spacing:.16em;color:var(--ink2);margin-bottom:3px}
+
+.near{list-style:none}
+.near li{border-bottom:1px dotted var(--hair)}
+.near li:last-child{border-bottom:0}
+.near a{
+  display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  padding:7px 0;text-decoration:none;color:inherit;
+}
+.near a:hover .n,.near a:focus .n{text-decoration:underline}
+.near .n{font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
+.near .v{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--ink2);text-align:right}
+.foot{
+  padding:12px 14px;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;
+  font-weight:700;color:var(--ink2);
+}
+.foot a{color:inherit}
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+  <!-- ============ THE LABEL: the complete answer ============ -->
+  <div class="label">
+
+    <div class="strip">
+      <span class="mark">
+        <svg viewBox="0 0 12 14" width="11" height="13" aria-hidden="true">
+          <path d="M1 3.2C1 2 3.2 1 6 1s5 1 5 2.2v7.6C11 12 8.8 13 6 13s-5-1-5-2.2z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M1 3.4c0 1.2 2.2 2.2 5 2.2s5-1 5-2.2" fill="none" stroke="currentColor" stroke-width="1.4"/>
+        </svg>
+        <a href="index.html">KeepsUntil</a>
+      </span>
+      <span class="src">Poultry &middot; USDA FoodKeeper</span>
+    </div>
+
+    <div class="field">
+      <div class="cap">Item</div>
+      <h1 class="item">Canned chicken</h1>
+    </div>
+
+    <div class="field">
+      <div class="cap">Unopened &middot; in the pantry</div>
+      <div class="dur">5 years</div>
+      <div class="sub">Counted from the day you bought it</div>
+    </div>
+
+    <div class="hot">
+      <div class="cap">Once opened &middot; in the fridge</div>
+      <div class="dur">3&ndash;4 days</div>
+      <div class="sub">Covered, not left in the open can</div>
+      <div class="dateline">
+        <label for="opened">Opened on</label>
+        <input id="opened" type="date">
+      </div>
+      <div class="out" id="useby"><small>Use by</small>Pick the day you opened it</div>
+    </div>
+
+    <div class="cost">
+      <div class="x">456&times;</div>
+      <div class="t">What opening the can costs<span class="calc">1,825 days sealed &divide; 4 days open</span></div>
+    </div>
+
+  </div>
+
+  <!-- ============ TEAR-OFF STUB ============ -->
+  <div class="stub">
+
+    <div class="perf">&mdash;&mdash;&mdash;&nbsp; tear here &nbsp;&mdash;&mdash;&mdash;</div>
+
+    <section>
+      <h2>Two counts, two starting days</h2>
+      <p>The five years and the three to four days are not one clock running down. The pantry count starts the day the can comes home; the fridge count starts the moment you open it, no matter how long the can sat sealed first. A can opened in its fifth year still gets its three to four days.</p>
+      <p class="quiet">USDA FoodKeeper lists no freezer window for canned chicken, so this label does not print one. Some items here gain months in the freezer; this one has no such entry to quote.</p>
+    </section>
+
+    <section>
+      <h2>The sealed can, if you want that date too</h2>
+      <p class="quiet">Five years from the day it was bought. Useful once a year, when you clear the shelf &mdash; not while you are standing at the fridge.</p>
+      <div class="second">
+        <label for="bought">Bought on</label>
+        <input id="bought" type="date">
+      </div>
+      <div class="secout" id="pantryout"><small>Sealed can good until</small>Pick the day you bought it</div>
+    </section>
+
+    <section>
+      <h2>Same shape, other shelves</h2>
+      <ul class="near">
+        <li><a href="index.html"><span class="n">Anchovies, canned</span><span class="v">5 years &rarr; 3&ndash;4 days &middot; 456&times;</span></a></li>
+        <li><a href="index.html"><span class="n">Milk, canned evaporated</span><span class="v">12 months &rarr; 4&ndash;5 days &middot; 72&times;</span></a></li>
+        <li><a href="index.html"><span class="n">Milk, shelf-stable</span><span class="v">6&ndash;12 months &rarr; 5&ndash;7 days &middot; 51&times;</span></a></li>
+        <li><a href="index.html"><span class="n">Bacon, fully cooked</span><span class="v">6 months &rarr; 5&ndash;14 days &middot; 13&times;</span></a></li>
+      </ul>
+      <p class="quiet" style="margin-top:9px">Of the fifteen items on this site, six carry both a sealed window and an open one. Canned chicken and canned anchovies share the widest drop of those six.</p>
+    </section>
+
+    <section>
+      <h2>Read this before you trust the date</h2>
+      <p class="quiet">These are quality windows from the USDA FoodKeeper data, not safety guarantees, and they assume a fridge at 40&nbsp;&deg;F or below and a pantry that stays cool and dry. A can that is bulging, leaking, badly dented at the seam or rusted through goes in the bin whatever the date says, and so does anything that smells wrong when opened. When in doubt, throw it out.</p>
+    </section>
+
+    <div class="foot">KeepsUntil &middot; <a href="index.html">back to the blank label</a></div>
+  </div>
+
+</div>
+
+<script>
+/* Canned chicken, exactly as sample-data.json has it:
+   pantry_purchase 1825 days ("5 years"), fridge_open 3-4 days.  */
+var OPEN_MIN=3, OPEN_MAX=4, PANTRY=1825;
+
+var WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+    MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/* Formatted by hand: never locale-dependent. */
+function fmt(d,withYear){
+  var s=WD[d.getDay()]+' '+d.getDate()+' '+MO[d.getMonth()];
+  return withYear?s+' '+d.getFullYear():s;
+}
+function parse(v){
+  if(!v)return null;
+  var p=v.split('-');
+  if(p.length!==3)return null;
+  var d=new Date(+p[0],+p[1]-1,+p[2]);
+  return isNaN(d.getTime())?null:d;
+}
+function plus(d,n){var x=new Date(d.getTime());x.setDate(x.getDate()+n);return x;}
+function iso(d){
+  var m=d.getMonth()+1,day=d.getDate();
+  return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(day<10?'0':'')+day;
+}
+
+var thisYear=new Date().getFullYear();
+var opened=document.getElementById('opened'),
+    useby=document.getElementById('useby'),
+    bought=document.getElementById('bought'),
+    pantryout=document.getElementById('pantryout');
+
+function runOpen(){
+  var d=parse(opened.value);
+  if(!d){useby.innerHTML='<small>Use by</small>Pick the day you opened it';return;}
+  var a=plus(d,OPEN_MIN), b=plus(d,OPEN_MAX);
+  var yr=(a.getFullYear()!==thisYear)||(b.getFullYear()!==thisYear);
+  useby.innerHTML='<small>Use by &mdash; safest end first</small>'+fmt(a,yr)+' &ndash; '+fmt(b,yr);
+}
+function runPantry(){
+  var d=parse(bought.value);
+  if(!d){pantryout.innerHTML='<small>Sealed can good until</small>Pick the day you bought it';return;}
+  pantryout.innerHTML='<small>Sealed can good until</small>'+fmt(plus(d,PANTRY),true);
+}
+
+opened.value=iso(new Date());
+opened.addEventListener('input',runOpen);
+opened.addEventListener('change',runOpen);
+bought.addEventListener('input',runPantry);
+bought.addEventListener('change',runPantry);
+runOpen();
+runPantry();
+</script>
+</body>
+</html>

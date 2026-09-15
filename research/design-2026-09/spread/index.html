@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeepsUntil — shelf life, set as a spread</title>
+<style>
+/* ============================================================
+   THE SPREAD — direction D for KeepsUntil.
+   One signal colour (signal yellow) with one meaning ONLY:
+   "this is the short window — the one that runs out".
+   Никакого второго акцента: жёлтый = короткое окно, везде.
+   ============================================================ */
+
+:root{
+  color-scheme: light dark;
+
+  --stock:      #e6e6e2;   /* mid grey press stock, not white paper */
+  --stock-deep: #dcdcd7;   /* the one darker plane, for the chart bed */
+  --ink:        #101011;
+  --ink-2:      #56564f;
+  --rule:       #bfbfb8;
+  --rule-hair:  #cdcdc6;
+  --signal:     #f2e400;
+  --on-signal:  #101011;
+
+  --display: "Arial Black","Arial Bold",Helvetica,Arial,sans-serif;
+  --text: "Helvetica Neue",Helvetica,Arial,sans-serif;
+
+  --u: 6px;               /* rhythm unit; every gap is a multiple */
+  --pad: clamp(18px, 4vw, 56px);
+  --maxw: 1360px;
+}
+
+@media (prefers-color-scheme: dark){
+  :root{
+    --stock:      #131312;
+    --stock-deep: #1c1c1a;
+    --ink:        #ececE4;
+    --ink-2:      #8d8d84;
+    --rule:       #35352f;
+    --rule-hair:  #2a2a26;
+    --signal:     #f4e72a;
+    --on-signal:  #101011;
+  }
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--stock);
+  color:var(--ink);
+  font-family:var(--text);
+  font-size:16px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+p{margin:0 0 calc(var(--u)*3)}
+
+.sheet{max-width:var(--maxw);margin:0 auto;padding:0 var(--pad) calc(var(--u)*14)}
+
+/* ---------- folio: a running head, not a brand bar ---------- */
+.folio{
+  display:flex;flex-wrap:wrap;gap:calc(var(--u)*2) calc(var(--u)*4);
+  align-items:baseline;
+  padding:calc(var(--u)*2.5) 0;
+  border-bottom:1px solid var(--ink);
+  font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--ink-2);
+}
+.folio b{font-family:var(--display);font-weight:900;letter-spacing:.12em;color:var(--ink)}
+.folio .spacer{flex:1 1 auto}
+
+/* ---------- type ---------- */
+.kicker{
+  font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--ink-2);margin:0 0 calc(var(--u)*2);
+}
+h1{
+  font-family:var(--display);font-weight:900;
+  font-size:clamp(2.2rem, 6.6vw, 5.4rem);
+  line-height:1;letter-spacing:-.035em;
+  margin:0;
+}
+/* подложка инлайнового highlight выше строчного бокса и наезжает на строку сверху:
+   в заголовке делаем её собственным inline-block с посчитанной высотой */
+h1 .hl{display:inline-block;line-height:.8;padding:.09em .09em .07em;vertical-align:baseline}
+h2{
+  font-family:var(--display);font-weight:900;
+  font-size:clamp(1.15rem,2.1vw,1.6rem);
+  line-height:1;letter-spacing:-.02em;
+  margin:0 0 calc(var(--u)*2);
+}
+.hl{
+  background:var(--signal);color:var(--on-signal);
+  padding:0 .07em;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;
+}
+.lede{font-size:clamp(.95rem,1.15vw,1.06rem);line-height:1.55;max-width:34em}
+.note{font-size:.8rem;line-height:1.5;color:var(--ink-2);max-width:32em}
+.tiny{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2)}
+
+/* ---------- the opening: hed left, single figure in the outer column ---------- */
+.opening{
+  display:grid;grid-template-columns:1fr;gap:calc(var(--u)*6);
+  padding:calc(var(--u)*8) 0 calc(var(--u)*6);
+}
+.figure{border-top:1px solid var(--ink);padding-top:calc(var(--u)*2)}
+.figure .n{
+  font-family:var(--display);font-weight:900;
+  font-size:clamp(3.6rem,11vw,7.4rem);
+  line-height:.82;letter-spacing:-.05em;
+  display:block;
+}
+.figure .n em{font-style:normal;font-size:.42em;letter-spacing:-.02em}
+.figure figcaption{margin-top:calc(var(--u)*2);font-size:.83rem;line-height:1.45;color:var(--ink-2);max-width:26em}
+.figure figcaption strong{color:var(--ink);font-weight:700}
+
+.rule-heavy{height:9px;background:var(--ink);margin:0}
+.rule-hair{height:1px;background:var(--rule);margin:0}
+
+/* ---------- a band: label rail + content, asymmetric ---------- */
+.band{padding:calc(var(--u)*8) 0 calc(var(--u)*4)}
+.band-grid{display:grid;grid-template-columns:1fr;gap:calc(var(--u)*4)}
+.rail .tiny{margin-bottom:calc(var(--u)*2)}
+
+/* ---------- the chart: one linear scale, real lengths ---------- */
+.chart{background:var(--stock-deep);padding:calc(var(--u)*4) calc(var(--u)*3);}
+.crow{padding:calc(var(--u)*3) 0;border-top:1px solid var(--rule-hair)}
+.crow:first-child{border-top:0}
+.cname{font-family:var(--display);font-weight:900;font-size:1rem;letter-spacing:-.01em;line-height:1.1}
+.cmult{font-family:var(--display);font-weight:900;line-height:.9;letter-spacing:-.04em;display:block}
+.cmult small{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;display:block;color:var(--ink-2);margin-top:6px;font-family:var(--text);font-weight:400}
+.track{margin-top:calc(var(--u)*1.5)}
+.lab{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);margin:0 0 3px}
+.bar{height:10px;min-width:3px;display:block}
+.bar-before{background:var(--ink)}
+.bar-after{background:var(--signal)}
+.track .gap{height:calc(var(--u)*1.5)}
+.ruler{width:100%;height:10px;display:block;margin-top:calc(var(--u)*2)}
+.ruler line{stroke:var(--rule);stroke-width:1;vector-effect:non-scaling-stroke}
+.crow-ruler{border-top:0;padding-top:0}
+.ruler-nums{display:flex;justify-content:space-between;margin:5px 0 0}
+
+/* ---------- freezer list: type only, no bars ---------- */
+.gain{list-style:none;margin:0;padding:0}
+.gain li{
+  display:grid;grid-template-columns:1fr auto;gap:calc(var(--u)*2);
+  align-items:baseline;
+  padding:calc(var(--u)*2) 0;border-top:1px solid var(--rule-hair);
+}
+.gain li:first-child{border-top:0}
+.gain .g-name{font-family:var(--display);font-weight:900;font-size:.98rem;letter-spacing:-.01em}
+.g-sub{display:block;font-family:var(--text);font-weight:400;font-size:.8rem;color:var(--ink-2);letter-spacing:0;margin-top:3px;text-transform:none}
+.gain .g-mult{font-family:var(--display);font-weight:900;font-size:1.5rem;letter-spacing:-.03em;line-height:1}
+
+/* ---------- the index of foods ---------- */
+.index{display:grid;grid-template-columns:1fr;gap:0}
+.item{padding:calc(var(--u)*3) 0;border-top:1px solid var(--rule)}
+.item h3{font-family:var(--display);font-weight:900;font-size:1.05rem;letter-spacing:-.015em;margin:0 0 calc(var(--u));line-height:1.15}
+/* ссылки — чернилами: жёлтый значит ТОЛЬКО «короткое окно», больше ничего */
+.item h3 a{text-decoration:none;border-bottom:3px solid var(--ink)}
+.item h3 a:hover{background:var(--ink);color:var(--stock)}
+.item .cat{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2);display:block;margin-bottom:calc(var(--u)*1.5)}
+.spans{margin:0}
+.spans div{display:flex;flex-wrap:wrap;gap:0 .5em;align-items:baseline;font-size:.84rem;line-height:1.45;margin-bottom:2px}
+.spans .k{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);flex:0 0 auto;min-width:12.5em}
+.spans .v{font-weight:700}
+.spans .short .v{background:var(--signal);color:var(--on-signal);padding:0 .25em}
+.readon{display:inline-block;margin-top:calc(var(--u)*1.5);font-size:10px;letter-spacing:.2em;text-transform:uppercase}
+
+/* ---------- colophon ---------- */
+.colophon{border-top:9px solid var(--ink);padding-top:calc(var(--u)*3);margin-top:calc(var(--u)*8)}
+.colophon .cols{display:grid;grid-template-columns:1fr;gap:calc(var(--u)*3)}
+.colophon p{font-size:.78rem;line-height:1.5;color:var(--ink-2);max-width:34em;margin:0 0 calc(var(--u)*1.5)}
+
+/* ============================ 760px ============================ */
+@media (min-width:760px){
+  .opening{grid-template-columns:1.55fr 1fr;gap:calc(var(--u)*8);align-items:end}
+  .band-grid{grid-template-columns:200px 1fr;gap:calc(var(--u)*8)}
+  .chart{padding:calc(var(--u)*5) calc(var(--u)*5)}
+  .crow{display:grid;grid-template-columns:180px 1fr 92px;gap:calc(var(--u)*4);align-items:start}
+  .crow .cmult{text-align:right}
+  .index{grid-template-columns:1fr 1fr;column-gap:calc(var(--u)*8)}
+  .colophon .cols{grid-template-columns:1fr 1fr;gap:calc(var(--u)*8)}
+}
+/* ============================ 1100px ============================ */
+@media (min-width:1100px){
+  .band-grid{grid-template-columns:240px 1fr}
+  .crow{grid-template-columns:220px 1fr 120px}
+  .index{grid-template-columns:1fr 1fr 1fr;column-gap:calc(var(--u)*6)}
+}
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+  <header class="folio">
+    <b>KeepsUntil</b>
+    <span>Shelf life, read off the USDA FoodKeeper</span>
+    <span class="spacer"></span>
+    <span>15 foods in this sample</span>
+  </header>
+
+  <!-- ============ THE OPENING ============ -->
+  <section class="opening">
+    <div>
+      <p class="kicker">The number the source leaves you to work out</p>
+      <h1>Sealed,<br>it keeps for<br>years.<br>Open, for<br><span class="hl">days.</span></h1>
+    </div>
+
+    <figure class="figure">
+      <span class="n">456<em>&#215;</em></span>
+      <figcaption>
+        <strong>Canned chicken.</strong> Five years in the pantry with the lid on.
+        Three to four days in the fridge with the lid off. Opening the can divides
+        the window by 456 &mdash; measured against the more generous of the two open
+        figures, 1,825 days against 4.
+      </figcaption>
+    </figure>
+  </section>
+
+  <div class="rule-heavy"></div>
+
+  <!-- ============ THE SPREAD: one scale, two states ============ -->
+  <section class="band">
+    <div class="band-grid">
+      <div class="rail">
+        <p class="tiny">Spread one</p>
+        <h2>One scale,<br>two states</h2>
+        <p class="note">
+          Every bar below is drawn on the same line: nought to 1,825 days, linear.
+          The dark bar is the food before it is opened. The yellow bar underneath it
+          is what is left afterwards. For most of these, afterwards is a hairline.
+        </p>
+        <p class="note">
+          Bars thinner than three pixels are drawn at three pixels so that they exist
+          at all; the figures printed beside them are the exact ones.
+        </p>
+      </div>
+
+      <div>
+        <div class="chart">
+
+          <div class="crow">
+            <div class="cname">Canned chicken<span class="g-sub">Poultry</span></div>
+            <div class="track">
+              <p class="lab">Pantry, sealed, from purchase &mdash; 1,825 days</p>
+              <span class="bar bar-before" style="width:100%"></span>
+              <div class="gap"></div>
+              <p class="lab">Refrigerated, once opened &mdash; 4 days</p>
+              <span class="bar bar-after" style="width:0.219%"></span>
+            </div>
+            <span class="cmult" style="font-size:3.2rem">456&#215;<small>shorter</small></span>
+          </div>
+
+          <div class="crow">
+            <div class="cname">Anchovies, canned<span class="g-sub">Condiments, Sauces &amp; Canned Goods</span></div>
+            <div class="track">
+              <p class="lab">Pantry, sealed &mdash; 1,825 days</p>
+              <span class="bar bar-before" style="width:100%"></span>
+              <div class="gap"></div>
+              <p class="lab">Refrigerated, once opened &mdash; 4 days</p>
+              <span class="bar bar-after" style="width:0.219%"></span>
+            </div>
+            <span class="cmult" style="font-size:3.2rem">456&#215;<small>shorter</small></span>
+          </div>
+
+          <div class="crow">
+            <div class="cname">Milk, canned evaporated or condensed<span class="g-sub">Shelf Stable Foods</span></div>
+            <div class="track">
+              <p class="lab">Pantry, sealed, from purchase &mdash; 360 days</p>
+              <span class="bar bar-before" style="width:19.73%"></span>
+              <div class="gap"></div>
+              <p class="lab">Refrigerated, once opened &mdash; 5 days</p>
+              <span class="bar bar-after" style="width:0.274%"></span>
+            </div>
+            <span class="cmult" style="font-size:2.5rem">72&#215;<small>shorter</small></span>
+          </div>
+
+          <div class="crow">
+            <div class="cname">Milk, shelf-stable<span class="g-sub">Shelf Stable Foods</span></div>
+            <div class="track">
+              <p class="lab">Pantry, sealed, from purchase &mdash; up to 360 days</p>
+              <span class="bar bar-before" style="width:19.73%"></span>
+              <div class="gap"></div>
+              <p class="lab">Refrigerated, once opened &mdash; 7 days</p>
+              <span class="bar bar-after" style="width:0.384%"></span>
+            </div>
+            <span class="cmult" style="font-size:2.35rem">51&#215;<small>shorter</small></span>
+          </div>
+
+          <div class="crow">
+            <div class="cname">Bacon, fully cooked<span class="g-sub">Meat</span></div>
+            <div class="track">
+              <p class="lab">Pantry, sealed, from purchase &mdash; 180 days</p>
+              <span class="bar bar-before" style="width:9.86%"></span>
+              <div class="gap"></div>
+              <p class="lab">Refrigerated, once opened &mdash; up to 14 days</p>
+              <span class="bar bar-after" style="width:0.767%"></span>
+            </div>
+            <span class="cmult" style="font-size:1.85rem">13&#215;<small>shorter</small></span>
+          </div>
+
+          <div class="crow">
+            <div class="cname">Milk, ultra-pasteurized<span class="g-sub">Shelf Stable Foods</span></div>
+            <div class="track">
+              <p class="lab">Refrigerated, unopened &mdash; up to 90 days</p>
+              <span class="bar bar-before" style="width:4.93%"></span>
+              <div class="gap"></div>
+              <p class="lab">Refrigerated, once opened &mdash; up to 10 days</p>
+              <span class="bar bar-after" style="width:0.548%"></span>
+            </div>
+            <span class="cmult" style="font-size:1.7rem">9&#215;<small>shorter</small></span>
+          </div>
+
+          <!-- линейка живёт в той же колонке сетки, что и полосы, иначе шкала мерит не то -->
+          <div class="crow crow-ruler">
+            <div></div>
+            <div class="track">
+              <svg class="ruler" viewBox="0 0 1000 10" preserveAspectRatio="none" role="img" aria-label="Scale, nought to five years">
+                <line x1="0" y1="0.5" x2="1000" y2="0.5"></line>
+                <line x1="0.5" y1="0.5" x2="0.5" y2="9"></line>
+                <line x1="200" y1="0.5" x2="200" y2="9"></line>
+                <line x1="400" y1="0.5" x2="400" y2="9"></line>
+                <line x1="600" y1="0.5" x2="600" y2="9"></line>
+                <line x1="800" y1="0.5" x2="800" y2="9"></line>
+                <line x1="999.5" y1="0.5" x2="999.5" y2="9"></line>
+              </svg>
+              <p class="lab ruler-nums">
+                <span>0</span><span>1 yr</span><span>2 yr</span><span>3 yr</span><span>4 yr</span><span>5 yr</span>
+              </p>
+            </div>
+            <div></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="rule-hair"></div>
+
+  <!-- ============ SPREAD TWO: the freezer, type only ============ -->
+  <section class="band">
+    <div class="band-grid">
+      <div class="rail">
+        <p class="tiny">Spread two</p>
+        <h2>What the<br>freezer buys</h2>
+        <p class="note">
+          The other multiplier in the data, and the one that goes the right way.
+          No bars here: the question is how many times, not how long. The figure is
+          set larger the larger it is.
+        </p>
+      </div>
+
+      <div>
+        <ul class="gain">
+          <li>
+            <span class="g-name">Eggs, raw whites and yolks
+              <span class="g-sub">Fridge 2 to 4 days &rarr; freezer 12 months</span></span>
+            <span class="g-mult" style="font-size:3rem">90&#215;</span>
+          </li>
+          <li>
+            <span class="g-name">Quiche
+              <span class="g-sub">Fridge after opening 3 to 5 days &rarr; freezer 2 to 3 months</span></span>
+            <span class="g-mult" style="font-size:2.1rem">18&#215;</span>
+          </li>
+          <li>
+            <span class="g-name">Anchovies, canned
+              <span class="g-sub">Fridge after opening 3 to 4 days &rarr; freezer 2 months</span></span>
+            <span class="g-mult" style="font-size:2rem">15&#215;</span>
+          </li>
+          <li>
+            <span class="g-name">Butter
+              <span class="g-sub">Fridge from purchase 1 to 2 months &rarr; freezer 6 to 9 months</span></span>
+            <span class="g-mult" style="font-size:1.45rem">4.5&#215;</span>
+          </li>
+          <li>
+            <span class="g-name">Bacon
+              <span class="g-sub">Fridge from purchase 1 week &rarr; freezer 1 month</span></span>
+            <span class="g-mult" style="font-size:1.4rem">4.3&#215;</span>
+          </li>
+          <li>
+            <span class="g-name">Bacon, uncured
+              <span class="g-sub">Fridge 4 to 7 days &rarr; freezer 3 to 4 weeks</span></span>
+            <span class="g-mult" style="font-size:1.35rem">4&#215;</span>
+          </li>
+        </ul>
+        <p class="note" style="margin-top:calc(var(--u)*3)">
+          Three foods in this sample carry the opposite verdict. Eggs in the shell,
+          hard-boiled eggs and lactose-free milk are all marked
+          <strong style="color:var(--ink)">freezing not recommended</strong> &mdash;
+          the freezer is not an option there, at any multiple.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="rule-heavy"></div>
+
+  <!-- ============ THE INDEX ============ -->
+  <section class="band">
+    <div class="band-grid">
+      <div class="rail">
+        <p class="tiny">The list</p>
+        <h2>Fifteen<br>foods</h2>
+        <p class="note">
+          Straight from the FoodKeeper, in its own words. Yellow marks the shortest
+          window each food has &mdash; the one that decides.
+        </p>
+      </div>
+
+      <div class="index">
+
+        <article class="item">
+          <h3><a href="product.html">Canned chicken</a></h3>
+          <span class="cat">Poultry</span>
+          <div class="spans">
+            <div><span class="k">Pantry, from purchase</span><span class="v">5 years</span></div>
+            <div class="short"><span class="k">Fridge, after opening</span><span class="v">3 days to 4 days</span></div>
+          </div>
+          <a class="readon" href="product.html">Read the spread &rarr;</a>
+        </article>
+
+        <article class="item">
+          <h3>Anchovies, canned</h3>
+          <span class="cat">Condiments, Sauces &amp; Canned Goods</span>
+          <div class="spans">
+            <div><span class="k">Pantry</span><span class="v">5 years</span></div>
+            <div><span class="k">Freezer</span><span class="v">2 months</span></div>
+            <div class="short"><span class="k">Fridge, after opening</span><span class="v">3 days to 4 days</span></div>
+          </div>
+        </article>
+
+        <article class="item">
+          <h3>Bacon, fully cooked</h3>
+          <span class="cat">Meat</span>
+          <div class="spans">
+            <div><span class="k">Pantry, from purchase</span><span class="v">6 months</span></div>
+            <div class="short"><span class="k">Fridge, after opening</span><span class="v">5 days to 14 days</span></div>
+          </div>
+        </article>
+
+        <article class="item">
+          <h3>Milk, canned evaporated or condensed</h3>
+          <span class="cat">Shelf Stable Foods</span>
+          <div class="spans">
+            <div><span class="k">Pantry, from purchase</span><span class="v">12 months</span></div>
+            <div class="short"><span class="k">Fridge, after opening</span><span class="v">4 days to 5 days</span></div>
+          </div>
+        </article>
+
+        <article class="item">
+          <h3>Milk, shelf-stable</h3>
+          <span class="cat">Shelf Stable Foods</span>
+          <div class="spans">
+            <div><span class="k">Pantry, from purchase</span><span class="v">6 months to 12 months</span></div>
+            <div class="short"><span class="k">Fridge, after opening</span><span class="v">5 days to 7 days</span></div>
+          </div>
+        </article>
+
+        <article class="item">
+          <h3>Milk, ultra-pasteurized</h3>
+          <span class="cat">Shelf Stable Foods</span>
+          <div class="spans">
+            <div><span class="k">Fridge</span><span class="v">1 month to 3 months</span></div>
+            <div class="short"><span class="k">Fridge, after opening</span><span class="v">7 days to 10 days</span></div>
+          </div>
+        </article>
+
+        <article class="item">
+          <h3>Butter</h3>
+          <span class="cat">Dairy Products &amp; Eggs</span>
+          <div class="spans">
+            <div><span class="k">Freezer, from purchase</span><span class="v">6 months to 9 months</span></div>
+            <div class="short"><span class="k">Fridge, from purchase</span><span class="v">1 month to 2 months</span></div>
+          </div>
+        </article>
+
+        <article class="item">
+          <h3>Eggs, in shell</h3>
+          <span class="cat">Dairy Products &amp; Eggs</span>
+          <div class="spans">
+            <div class="short"><span class="k">Fridge, from purchase</span><span class="v">3 weeks to 5 weeks</span></div>
+            <div><span class="k">Freezer</span><span class="v">not recommended</span></div>
+          </div>
+        </article>
+
+        <article class="item">
+          <h3>Eggs, raw whites, yolks</h3>
+          <span class="cat">Dairy Products &amp; Eggs</span>
+          <div class="spans">
+            <div><span class="k">Freezer</span><span class="v">12 months</span></div>
+            <div class="short"><span class="k">Fridge</span><span class="v">2 days to 4 days</span></div>
+          </div>
+        </article>
+
+        <article class="item">
+          <h3>Eggs, hard boiled cooked</h3>
+          <span class="cat">Dairy Products &amp; Eggs</span>
+          <div class="spans">
+            <div class="short"><span class="k">Fridge</span><span class="v">1 week</span></div>
+            <div><span class="k">Freezer</span><span class="v">not recommended</span></div>
+          </div>
+        </article>
+
+        <article class="item">
+          <h3>Milk, plain or flavored</h3>
+          <span class="cat">Dairy Products &amp; Eggs</span>
+          <div class="spans">
+            <div class="short"><span class="k">Freezer, from purchase</span><span class="v">3 months</span></div>
+          </div>
+          <p class="note" style="font-size:.76rem;margin:calc(var(--u)*1.5) 0 0">
+            The only figure the source carries for this entry. Nothing here about the fridge.
+          </p>
+        </article>
+
+        <article class="item">
+          <h3>Milk, lactose-free</h3>
+          <span class="cat">Dairy Products &amp; Eggs</span>
+          <div class="spans">
+            <div class="short"><span class="k">Fridge, after opening</span><span class="v">1 week</span></div>
+            <div><span class="k">Freezer</span><span class="v">not recommended</span></div>
+          </div>
+        </article>
+
+        <article class="item">
+          <h3>Bacon</h3>
+          <span class="cat">Meat</span>
+          <div class="spans">
+            <div><span class="k">Freezer, from purchase</span><span class="v">1 month</span></div>
+            <div class="short"><span class="k">Fridge, from purchase</span><span class="v">1 week</span></div>
+            <div class="short"><span class="k">Fridge, after opening</span><span class="v">1 week</span></div>
+          </div>
+        </article>
+
+        <article class="item">
+          <h3>Bacon, uncured</h3>
+          <span class="cat">Meat</span>
+          <div class="spans">
+            <div><span class="k">Freezer</span><span class="v">3 weeks to 4 weeks</span></div>
+            <div class="short"><span class="k">Fridge</span><span class="v">4 days to 7 days</span></div>
+          </div>
+        </article>
+
+        <article class="item">
+          <h3>Quiche</h3>
+          <span class="cat">Baked Goods</span>
+          <div class="spans">
+            <div><span class="k">Freezer</span><span class="v">2 months to 3 months</span></div>
+            <div><span class="k">Fridge, after opening</span><span class="v">3 days to 5 days</span></div>
+            <div class="short"><span class="k">Room temperature</span><span class="v">2 hours</span></div>
+          </div>
+          <p class="note" style="font-size:.76rem;margin:calc(var(--u)*1.5) 0 0">
+            The two hours are a safety limit for time out of the fridge, not a shelf life.
+          </p>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ COLOPHON ============ -->
+  <footer class="colophon">
+    <div class="cols">
+      <div>
+        <p><strong style="color:var(--ink)">Where the figures come from.</strong>
+        Every span on this page is the USDA FoodKeeper's own wording for that food and
+        that place, reproduced without adjustment. FoodKeeper data is published by the
+        U.S. Department of Agriculture and is in the public domain.</p>
+      </div>
+      <div>
+        <p><strong style="color:var(--ink)">What is worked out here.</strong>
+        The multipliers are not in the source. Each one divides the longer figure by
+        the longer figure of the shorter state, so it is the mildest version of the
+        gap, not the most alarming: 1,825 &divide; 4 = 456.25, printed as 456&#215;.
+        Multipliers are rounded to whole numbers above 10 and to one decimal below.
+        A span is a quality figure, not a moment of failure &mdash; food that looks,
+        smells or sounds wrong goes out whatever the date says.</p>
+      </div>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

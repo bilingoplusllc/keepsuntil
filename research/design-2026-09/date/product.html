@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canned chicken — until when does it keep? | KeepsUntil</title>
+<meta name="description" content="Canned chicken keeps 5 years sealed in the pantry and 3 to 4 days in the fridge once opened. Give the two dates and get the calendar date this can stops being good.">
+<meta name="color-scheme" content="light dark">
+<style>
+:root{
+  --paper:#ffffff;
+  --ink:#10131b;
+  --muted:#61677a;
+  --rule:#dfe2ea;
+  --rule-strong:#10131b;
+  --signal:#2b31d8;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#0c0e13;
+    --ink:#e9ebf2;
+    --muted:#959bab;
+    --rule:#242835;
+    --rule-strong:#e9ebf2;
+    --signal:#98a0ff;
+  }
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:15px;
+  line-height:1.45;
+  font-feature-settings:"tnum" 1;
+  font-variant-numeric:tabular-nums;
+}
+.topbar{height:7px;background:var(--rule-strong)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+.masthead{padding:22px 0 0}
+.brand{
+  margin:0;
+  font-size:11px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.brand a{color:inherit;text-decoration:none;border-bottom:1px solid var(--rule)}
+.brand a:hover{color:var(--signal)}
+h1{
+  margin:10px 0 0;
+  font-size:clamp(34px,9vw,64px);
+  line-height:.98;
+  letter-spacing:-.04em;
+  font-weight:800;
+}
+.kind{
+  margin:8px 0 0;
+  font-size:13px;
+  color:var(--muted);
+}
+
+/* ---------- two inputs, one question ---------- */
+.q{
+  margin:20px 0 0;
+  border:2px solid var(--rule-strong);
+  border-radius:12px;
+  overflow:hidden;
+}
+.qlead{
+  margin:0;
+  padding:12px 16px 2px;
+  font-size:11px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.fields{display:grid;grid-template-columns:1fr}
+.f{padding:2px 16px 14px}
+.f + .f{border-top:1px solid var(--rule)}
+.fl{display:block;font-size:14px;color:var(--ink);padding-bottom:2px;font-weight:600}
+.fh{display:block;font-size:12px;color:var(--muted);padding-bottom:4px}
+.fin{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+input[type="date"]{
+  font:inherit;
+  font-size:clamp(19px,5vw,26px);
+  font-weight:700;
+  letter-spacing:-.02em;
+  color:var(--ink);
+  background:transparent;
+  border:0;
+  border-bottom:2px solid var(--rule);
+  padding:2px 0;
+  min-width:11ch;
+  max-width:100%;
+}
+input[type="date"]:focus{outline:0;border-bottom-color:var(--signal)}
+.today{
+  font:inherit;
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  background:transparent;
+  border:0;
+  border-bottom:1px solid var(--rule);
+  padding:2px 0;
+  cursor:pointer;
+}
+.today:hover,.today:focus{color:var(--signal);border-bottom-color:var(--signal);outline:0}
+
+/* ---------- the answer ---------- */
+.answer{
+  margin:28px 0 0;
+  padding:0 0 26px;
+  border-bottom:2px solid var(--rule-strong);
+}
+.kicker{
+  margin:0;
+  font-size:11px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.big{
+  margin:6px 0 0;
+  font-size:clamp(30px,8vw,62px);
+  line-height:1.02;
+  letter-spacing:-.035em;
+  font-weight:800;
+}
+.big.dated{color:var(--signal)}
+.under{margin:10px 0 0;font-size:14.5px;color:var(--muted);max-width:40em}
+.under b{color:var(--ink);font-weight:600}
+.warn{
+  margin:12px 0 0;
+  font-size:13px;
+  color:var(--muted);
+  border-left:2px solid var(--rule);
+  padding-left:12px;
+  max-width:40em;
+}
+
+/* ---------- the two clocks ---------- */
+.clocks{
+  margin:26px 0 0;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:0;
+}
+.clock{padding:18px 0;border-bottom:1px solid var(--rule)}
+.clabel{
+  margin:0;
+  font-size:11px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.cval{
+  margin:4px 0 0;
+  font-size:26px;
+  font-weight:700;
+  letter-spacing:-.025em;
+}
+.cval.dated{color:var(--signal)}
+.cwas{margin:4px 0 0;font-size:12.5px;color:var(--muted)}
+.cnote{margin:6px 0 0;font-size:13px;color:var(--muted)}
+.gap{
+  padding:18px 0;
+  border-bottom:1px solid var(--rule);
+}
+.gapnum{
+  margin:0;
+  font-size:clamp(26px,7vw,44px);
+  font-weight:800;
+  letter-spacing:-.035em;
+  line-height:1;
+}
+.gaptext{margin:6px 0 0;font-size:13.5px;color:var(--muted);max-width:30em}
+
+/* ---------- caveats, source ---------- */
+.fine{
+  margin:26px 0 0;
+  padding:16px 0 40px;
+  border-top:1px solid var(--rule);
+  font-size:12.5px;
+  color:var(--muted);
+  max-width:56em;
+}
+.fine p{margin:0 0 8px}
+.fine b{color:var(--ink);font-weight:600}
+.fine a{color:var(--signal)}
+
+@media (min-width:680px){
+  .fields{grid-template-columns:1fr 1fr}
+  .f + .f{border-top:0;border-left:1px solid var(--rule)}
+  .clocks{
+    grid-template-columns:1fr 1fr;
+    gap:0 32px;
+    border-bottom:1px solid var(--rule);
+  }
+  .clock{border-bottom:0}
+  .gap{
+    grid-column:1 / -1;
+    border-bottom:0;
+    border-top:1px solid var(--rule);
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:0 32px;
+    align-items:start;
+  }
+}
+</style>
+</head>
+<body>
+<div class="topbar"></div>
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="brand"><a href="index.html">KeepsUntil</a> &middot; Poultry</p>
+    <h1>Canned chicken</h1>
+    <p class="kind">Two clocks: one runs from the day you bought it, one from the day you opened it.</p>
+
+    <form class="q" id="q" autocomplete="off">
+      <p class="qlead">This can was</p>
+      <div class="fields">
+        <div class="f">
+          <label class="fl" for="d-bought">bought on</label>
+          <span class="fh">the day it came home</span>
+          <div class="fin">
+            <input type="date" id="d-bought">
+            <button type="button" class="today" data-for="d-bought">today</button>
+          </div>
+        </div>
+        <div class="f">
+          <label class="fl" for="d-open">opened on</label>
+          <span class="fh">leave blank while it is still sealed</span>
+          <div class="fin">
+            <input type="date" id="d-open">
+            <button type="button" class="today" data-for="d-open">today</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </header>
+
+  <main>
+    <section class="answer">
+      <div id="pre">
+        <p class="kicker">Before you tell it a date</p>
+        <p class="big">5 years sealed. 3 to 4 days open.</p>
+        <p class="under">Fill in either date above and this line becomes a date on your calendar. Both dates are optional; whichever you give, the earlier of the two clocks is the answer.</p>
+      </div>
+      <div id="post" hidden>
+        <p class="kicker" id="post-kicker"></p>
+        <p class="big dated" id="post-date"></p>
+        <p class="under" id="post-under"></p>
+        <p class="warn" id="post-warn" hidden></p>
+      </div>
+      <noscript><p class="under">The date boxes need JavaScript. The storage times below are complete without it.</p></noscript>
+    </section>
+
+    <section class="clocks">
+      <div class="clock">
+        <p class="clabel">Sealed &middot; pantry &middot; from purchase</p>
+        <p class="cval" id="c1-val">5 years</p>
+        <p class="cwas" id="c1-was" hidden>5 years &middot; 1,825 days</p>
+        <p class="cnote">Unopened can, cool and dry. 1,825 days.</p>
+      </div>
+      <div class="clock">
+        <p class="clabel">Opened &middot; fridge &middot; from opening</p>
+        <p class="cval" id="c2-val">3 to 4 days</p>
+        <p class="cwas" id="c2-was" hidden>3 to 4 days</p>
+        <p class="cnote">Leftovers in a covered container, 40&deg;F or below.</p>
+      </div>
+      <div class="gap">
+        <p class="gapnum" id="gap-num">1,821 days lost</p>
+        <p class="gaptext" id="gap-text">Opening the can cuts what is left by 456 times: 1,825 days become 4. Nothing else on this page matters as much as which of the two dates you filled in.</p>
+      </div>
+    </section>
+
+    <section class="fine">
+      <p><b>What the two dates mean.</b> Bought on: the day the sealed can came home; FoodKeeper counts its pantry life from purchase, not from the printed code. Opened on: the day the can was opened and the contents moved to a covered container in the fridge. If the can is still sealed, leave the second box empty.</p>
+      <p><b>These are quality dates, not safety guarantees.</b> They assume the pantry is cool and dry and the fridge is at 40&deg;F or below. A bulging, leaking or badly dented can, or anything that smells wrong when opened, goes in the bin whatever the date says.</p>
+      <p>Times from the public USDA FoodKeeper data. The dates are computed here, day by day, from the dates you gave. <a href="index.html">All foods</a>.</p>
+    </section>
+  </main>
+</div>
+
+<script>
+(function(){
+  var MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var WDAY = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  var DAY = 86400000;
+  var SEALED = 1825;
+  var OPEN_MIN = 3;
+  var OPEN_MAX = 4;
+
+  function parseDate(value){
+    if(!value){ return null; }
+    var parts = value.split("-");
+    if(parts.length !== 3){ return null; }
+    var y = parseInt(parts[0], 10);
+    var m = parseInt(parts[1], 10);
+    var d = parseInt(parts[2], 10);
+    if(!y || !m || !d){ return null; }
+    return Date.UTC(y, m - 1, d);
+  }
+
+  function shift(stamp, days){ return stamp + Math.round(days) * DAY; }
+
+  function one(stamp){
+    var dt = new Date(stamp);
+    return MON[dt.getUTCMonth()] + " " + dt.getUTCDate() + ", " + dt.getUTCFullYear();
+  }
+
+  function withWeekday(stamp){
+    var dt = new Date(stamp);
+    return WDAY[dt.getUTCDay()] + ", " + one(stamp);
+  }
+
+  function span(a, b){
+    if(a === b){ return one(a); }
+    var da = new Date(a);
+    var db = new Date(b);
+    if(da.getUTCFullYear() === db.getUTCFullYear()){
+      if(da.getUTCMonth() === db.getUTCMonth()){
+        return MON[da.getUTCMonth()] + " " + da.getUTCDate() + " to " + db.getUTCDate() + ", " + db.getUTCFullYear();
+      }
+      return MON[da.getUTCMonth()] + " " + da.getUTCDate() + " to " + MON[db.getUTCMonth()] + " " + db.getUTCDate() + ", " + db.getUTCFullYear();
+    }
+    return one(a) + " to " + one(b);
+  }
+
+  function group(n){
+    var s = "" + Math.abs(Math.round(n));
+    var out = "";
+    var count = 0;
+    var i;
+    for(i = s.length - 1; i >= 0; i--){
+      out = s.charAt(i) + out;
+      count = count + 1;
+      if(count % 3 === 0 && i > 0){ out = "," + out; }
+    }
+    return out;
+  }
+
+  function todayStamp(){
+    var now = new Date();
+    return Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+
+  function todayValue(){
+    var now = new Date();
+    var m = now.getMonth() + 1;
+    var d = now.getDate();
+    var mm = m < 10 ? "0" + m : "" + m;
+    var dd = d < 10 ? "0" + d : "" + d;
+    return now.getFullYear() + "-" + mm + "-" + dd;
+  }
+
+  function relative(stamp){
+    var diff = Math.round((stamp - todayStamp()) / DAY);
+    if(diff === 0){ return "That is today."; }
+    if(diff === 1){ return "That is tomorrow."; }
+    if(diff > 1){ return "That is " + group(diff) + " days from today."; }
+    if(diff === -1){ return "That was yesterday. Bin it."; }
+    return "That was " + group(diff) + " days ago. Bin it.";
+  }
+
+  var bought = document.getElementById("d-bought");
+  var opened = document.getElementById("d-open");
+
+  var pre = document.getElementById("pre");
+  var post = document.getElementById("post");
+  var kicker = document.getElementById("post-kicker");
+  var bigDate = document.getElementById("post-date");
+  var under = document.getElementById("post-under");
+  var warn = document.getElementById("post-warn");
+
+  var c1val = document.getElementById("c1-val");
+  var c1was = document.getElementById("c1-was");
+  var c2val = document.getElementById("c2-val");
+  var c2was = document.getElementById("c2-was");
+  var gapNum = document.getElementById("gap-num");
+  var gapText = document.getElementById("gap-text");
+
+  var GAP_NUM_PLAIN = gapNum.textContent;
+  var GAP_TEXT_PLAIN = gapText.textContent;
+
+  function render(){
+    var b = parseDate(bought.value);
+    var o = parseDate(opened.value);
+
+    var sealedEnd = b === null ? null : shift(b, SEALED);
+    var openLo = o === null ? null : shift(o, OPEN_MIN);
+    var openHi = o === null ? null : shift(o, OPEN_MAX);
+
+    /* clock 1 */
+    if(sealedEnd === null){
+      c1val.textContent = "5 years";
+      c1val.className = "cval";
+      c1was.hidden = true;
+    } else {
+      c1val.textContent = one(sealedEnd);
+      c1val.className = "cval dated";
+      c1was.hidden = false;
+    }
+
+    /* clock 2 */
+    if(openLo === null){
+      c2val.textContent = "3 to 4 days";
+      c2val.className = "cval";
+      c2was.hidden = true;
+    } else {
+      c2val.textContent = span(openLo, openHi);
+      c2val.className = "cval dated";
+      c2was.hidden = false;
+    }
+
+    /* the gap between the two clocks: one number, one relation */
+    if(sealedEnd !== null && o !== null){
+      var left = Math.round((sealedEnd - o) / DAY);
+      if(left > OPEN_MAX){
+        gapNum.textContent = group(left) + " days became 4";
+        gapText.textContent = "On the day it was opened the sealed can still had " + group(left) + " days in it, good until " + one(sealedEnd) + ". Opened, it has 3 to 4 days. Sealed against opened, this food is 456 times shorter.";
+      } else if(left > 0){
+        gapNum.textContent = group(left) + " days were left";
+        gapText.textContent = "The sealed can was down to " + group(left) + " days when it was opened, good until " + one(sealedEnd) + ". The opened clock, 3 to 4 days, is now the one that matters.";
+      } else {
+        gapNum.textContent = "The sealed clock had run out";
+        gapText.textContent = "As a sealed can it was good until " + one(sealedEnd) + ", which was before it was opened. The 3 to 4 day fridge clock is the only one left, and it assumes the contents were sound when the can was opened.";
+      }
+    } else {
+      gapNum.textContent = GAP_NUM_PLAIN;
+      gapText.textContent = GAP_TEXT_PLAIN;
+    }
+
+    /* the answer */
+    warn.hidden = true;
+    warn.textContent = "";
+
+    if(b === null && o === null){
+      pre.hidden = false;
+      post.hidden = true;
+      return;
+    }
+    pre.hidden = true;
+    post.hidden = false;
+
+    if(o !== null){
+      kicker.textContent = "Opened, in the fridge — this clock governs";
+      bigDate.textContent = withWeekday(openLo);
+      under.textContent = relative(openLo) + " At the outside edge, " + one(openHi) + " — 3 to 4 days from the day it was opened.";
+      if(b !== null && o < b){
+        warn.hidden = false;
+        warn.textContent = "Check the dates: the opening date is before the purchase date.";
+      } else if(b !== null){
+        warn.hidden = false;
+        warn.textContent = "Sealed, it would have kept until " + one(sealedEnd) + ".";
+      }
+    } else {
+      kicker.textContent = "Sealed, in the pantry";
+      bigDate.textContent = withWeekday(sealedEnd);
+      under.textContent = relative(sealedEnd) + " That is 1,825 days from the day it was bought.";
+      warn.hidden = false;
+      warn.textContent = "Open it and the answer moves to 3 to 4 days from the day you open it. Fill in the second date when you do.";
+    }
+  }
+
+  bought.addEventListener("input", render);
+  bought.addEventListener("change", render);
+  opened.addEventListener("input", render);
+  opened.addEventListener("change", render);
+
+  var buttons = document.querySelectorAll(".today");
+  for(var i = 0; i < buttons.length; i++){
+    buttons[i].addEventListener("click", function(ev){
+      var target = document.getElementById(ev.currentTarget.getAttribute("data-for"));
+      target.value = todayValue();
+      render();
+    });
+  }
+
+  /* a date carried over from the index page arrives as ?b= or ?o= */
+  function fromQuery(){
+    var qs = window.location.search;
+    if(!qs || qs.length < 2){ return; }
+    var pairs = qs.substring(1).split("&");
+    var j;
+    for(j = 0; j < pairs.length; j++){
+      var kv = pairs[j].split("=");
+      var key = decodeURIComponent(kv[0]);
+      var val = kv.length > 1 ? decodeURIComponent(kv[1]) : "";
+      if(parseDate(val) === null){ continue; }
+      if(key === "b"){ bought.value = val; }
+      if(key === "o"){ opened.value = val; }
+    }
+  }
+
+  fromQuery();
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,474 @@
+[
+ {
+  "name": "Butter",
+  "category": "Dairy Products & Eggs",
+  "keywords": [
+   "Butter"
+  ],
+  "slots_days": {
+   "freeze_purchase": [
+    180.0,
+    270.0
+   ],
+   "fridge_purchase": [
+    30.0,
+    60.0
+   ]
+  },
+  "as_words": {
+   "freeze_purchase": "6 months to 9 months",
+   "fridge_purchase": "1 month to 2 months"
+  },
+  "freeze_gain": [
+   4.5,
+   60.0,
+   270.0,
+   "fridge_purchase",
+   "freeze_purchase"
+  ],
+  "opening_cost": null
+ },
+ {
+  "name": "Eggs, in shell",
+  "category": "Dairy Products & Eggs",
+  "keywords": [
+   "Eggs",
+   "in shell",
+   "egg",
+   "shell"
+  ],
+  "slots_days": {
+   "freeze": [
+    "no",
+    null
+   ],
+   "fridge_purchase": [
+    21.0,
+    35.0
+   ]
+  },
+  "as_words": {
+   "freeze": "not recommended",
+   "fridge_purchase": "3 weeks to 5 weeks"
+  },
+  "freeze_gain": null,
+  "opening_cost": null
+ },
+ {
+  "name": "Eggs, raw whites, yolks",
+  "category": "Dairy Products & Eggs",
+  "keywords": [
+   "Eggs",
+   "raw whites",
+   "yolks",
+   "egg",
+   "whites"
+  ],
+  "slots_days": {
+   "freeze": [
+    360.0,
+    360.0
+   ],
+   "fridge": [
+    2.0,
+    4.0
+   ]
+  },
+  "as_words": {
+   "freeze": "12 months",
+   "fridge": "2 days to 4 days"
+  },
+  "freeze_gain": [
+   90.0,
+   4.0,
+   360.0,
+   "fridge",
+   "freeze"
+  ],
+  "opening_cost": null
+ },
+ {
+  "name": "Eggs, hard boiled cooked",
+  "category": "Dairy Products & Eggs",
+  "keywords": [
+   "Eggs",
+   "egg",
+   "hard boiled cooked",
+   "boiled",
+   "hard boiled"
+  ],
+  "slots_days": {
+   "freeze": [
+    "no",
+    null
+   ],
+   "fridge": [
+    7.0,
+    7.0
+   ]
+  },
+  "as_words": {
+   "freeze": "not recommended",
+   "fridge": "1 week"
+  },
+  "freeze_gain": null,
+  "opening_cost": null
+ },
+ {
+  "name": "Milk, plain or flavored",
+  "category": "Dairy Products & Eggs",
+  "keywords": [
+   "Milk",
+   "plain",
+   "flavored",
+   "flavor"
+  ],
+  "slots_days": {
+   "freeze_purchase": [
+    90.0,
+    90.0
+   ]
+  },
+  "as_words": {
+   "freeze_purchase": "3 months"
+  },
+  "freeze_gain": null,
+  "opening_cost": null
+ },
+ {
+  "name": "Bacon",
+  "category": "Meat",
+  "keywords": [
+   "Bacon"
+  ],
+  "slots_days": {
+   "freeze_purchase": [
+    30.0,
+    30.0
+   ],
+   "fridge_purchase": [
+    7.0,
+    7.0
+   ],
+   "fridge_open": [
+    7.0,
+    7.0
+   ]
+  },
+  "as_words": {
+   "freeze_purchase": "1 month",
+   "fridge_purchase": "1 week",
+   "fridge_open": "1 week"
+  },
+  "freeze_gain": [
+   4.285714285714286,
+   7.0,
+   30.0,
+   "fridge_purchase",
+   "freeze_purchase"
+  ],
+  "opening_cost": null
+ },
+ {
+  "name": "Bacon, fully cooked",
+  "category": "Meat",
+  "keywords": [
+   "Bacon",
+   "fully cooked",
+   "cooked"
+  ],
+  "slots_days": {
+   "pantry_purchase": [
+    180.0,
+    180.0
+   ],
+   "fridge_open": [
+    5.0,
+    14.0
+   ]
+  },
+  "as_words": {
+   "pantry_purchase": "6 months",
+   "fridge_open": "5 days to 14 days"
+  },
+  "freeze_gain": null,
+  "opening_cost": [
+   12.857142857142858,
+   180.0,
+   14.0,
+   "pantry_purchase",
+   "fridge_open"
+  ]
+ },
+ {
+  "name": "Canned chicken",
+  "category": "Poultry",
+  "keywords": [
+   "Canned chicken",
+   "chicken",
+   "canned",
+   "can"
+  ],
+  "slots_days": {
+   "pantry_purchase": [
+    1825.0,
+    1825.0
+   ],
+   "fridge_open": [
+    3.0,
+    4.0
+   ]
+  },
+  "as_words": {
+   "pantry_purchase": "5 years",
+   "fridge_open": "3 days to 4 days"
+  },
+  "freeze_gain": null,
+  "opening_cost": [
+   456.25,
+   1825.0,
+   4.0,
+   "pantry_purchase",
+   "fridge_open"
+  ]
+ },
+ {
+  "name": "Quiche",
+  "category": "Baked Goods",
+  "keywords": [
+   "Quiche"
+  ],
+  "slots_days": {
+   "freeze": [
+    60.0,
+    90.0
+   ],
+   "pantry": [
+    0.08333333333333333,
+    0.08333333333333333
+   ],
+   "fridge_open": [
+    3.0,
+    5.0
+   ]
+  },
+  "as_words": {
+   "freeze": "2 months to 3 months",
+   "pantry": "2 hours",
+   "fridge_open": "3 days to 5 days"
+  },
+  "freeze_gain": [
+   18.0,
+   5.0,
+   90.0,
+   "fridge_open",
+   "freeze"
+  ],
+  "opening_cost": null
+ },
+ {
+  "name": "Milk, canned evaporated or condensed",
+  "category": "Shelf Stable Foods",
+  "keywords": [
+   "Milk",
+   "can",
+   "canned",
+   "evaporated",
+   "condensed",
+   "evaporate",
+   "condense"
+  ],
+  "slots_days": {
+   "pantry_purchase": [
+    360.0,
+    360.0
+   ],
+   "fridge_open": [
+    4.0,
+    5.0
+   ]
+  },
+  "as_words": {
+   "pantry_purchase": "12 months",
+   "fridge_open": "4 days to 5 days"
+  },
+  "freeze_gain": null,
+  "opening_cost": [
+   72.0,
+   360.0,
+   5.0,
+   "pantry_purchase",
+   "fridge_open"
+  ]
+ },
+ {
+  "name": "Milk, lactose-free",
+  "category": "Dairy Products & Eggs",
+  "keywords": [
+   "Milk",
+   "lactose",
+   "lactose-free"
+  ],
+  "slots_days": {
+   "freeze": [
+    "no",
+    null
+   ],
+   "fridge_open": [
+    7.0,
+    7.0
+   ]
+  },
+  "as_words": {
+   "freeze": "not recommended",
+   "fridge_open": "1 week"
+  },
+  "freeze_gain": null,
+  "opening_cost": null
+ },
+ {
+  "name": "Milk, shelf-stable",
+  "category": "Shelf Stable Foods",
+  "keywords": [
+   "shelf stable milk",
+   "milk",
+   "shelf",
+   "stable",
+   "UHT",
+   "ultrapasteurized",
+   "aseptic packaging"
+  ],
+  "slots_days": {
+   "pantry_purchase": [
+    180.0,
+    360.0
+   ],
+   "fridge_open": [
+    5.0,
+    7.0
+   ]
+  },
+  "as_words": {
+   "pantry_purchase": "6 months to 12 months",
+   "fridge_open": "5 days to 7 days"
+  },
+  "freeze_gain": null,
+  "opening_cost": [
+   51.42857142857143,
+   360.0,
+   7.0,
+   "pantry_purchase",
+   "fridge_open"
+  ]
+ },
+ {
+  "name": "Milk, ultra-pasteurized",
+  "category": "Shelf Stable Foods",
+  "keywords": [
+   "ultra pasteurized milk",
+   "milk",
+   "pasteurized",
+   "ultra"
+  ],
+  "slots_days": {
+   "fridge": [
+    30.0,
+    90.0
+   ],
+   "fridge_open": [
+    7.0,
+    10.0
+   ]
+  },
+  "as_words": {
+   "fridge": "1 month to 3 months",
+   "fridge_open": "7 days to 10 days"
+  },
+  "freeze_gain": null,
+  "opening_cost": [
+   9.0,
+   90.0,
+   10.0,
+   "fridge",
+   "fridge_open"
+  ]
+ },
+ {
+  "name": "Anchovies, canned",
+  "category": "Condiments, Sauces & Canned Goods",
+  "keywords": [
+   "anchovies",
+   "anchovy",
+   "canned anchovies"
+  ],
+  "slots_days": {
+   "freeze": [
+    60.0,
+    60.0
+   ],
+   "pantry": [
+    1825.0,
+    1825.0
+   ],
+   "fridge_open": [
+    3.0,
+    4.0
+   ]
+  },
+  "as_words": {
+   "freeze": "2 months",
+   "pantry": "5 years",
+   "fridge_open": "3 days to 4 days"
+  },
+  "freeze_gain": [
+   15.0,
+   4.0,
+   60.0,
+   "fridge_open",
+   "freeze"
+  ],
+  "opening_cost": [
+   456.25,
+   1825.0,
+   4.0,
+   "pantry",
+   "fridge_open"
+  ]
+ },
+ {
+  "name": "Bacon, uncured",
+  "category": "Meat",
+  "keywords": [
+   "uncured bacon",
+   "nitrite-free bacon",
+   "natural bacon",
+   "uncured",
+   "nitrite-free",
+   "nitrite",
+   "natural",
+   "bacon"
+  ],
+  "slots_days": {
+   "freeze": [
+    21.0,
+    28.0
+   ],
+   "fridge": [
+    4.0,
+    7.0
+   ]
+  },
+  "as_words": {
+   "freeze": "3 weeks to 4 weeks",
+   "fridge": "4 days to 7 days"
+  },
+  "freeze_gain": [
+   4.0,
+   7.0,
+   28.0,
+   "fridge",
+   "freeze"
+  ],
+  "opening_cost": null
+ }
+]

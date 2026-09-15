@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canned chicken — how long it keeps, drawn to scale | KeepsUntil</title>
+<style>
+/* ============================================================
+   DIRECTION A — "THE DIAL" — product page
+   Three linear rulers. Each is a window cut out of the one
+   above it, redrawn larger, with the magnification printed.
+   No table of storage figures anywhere on this page.
+
+   Два разных отсчёта: полка считается от покупки, холодильник —
+   от вскрытия. Поэтому ДВА поля даты и две стрелки, а не одно
+   поле на три величины.
+   ============================================================ */
+
+:root{
+  --paper:#e9e8ee;
+  --panel:#f5f4f8;
+  --ink:#17151f;
+  --ink-2:#565169;
+  --rule:#c2bfcf;
+  --rule-2:#d7d4e0;
+  --signal:#5b2ce0;
+  --signal-ink:#4a1fc4;
+  --winfill:#dcd9e6;
+  --sans:Verdana,Geneva,"DejaVu Sans",sans-serif;
+  --narrow:"Arial Narrow","Liberation Sans Narrow","Helvetica Neue Condensed",Tahoma,Verdana,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#131218;
+    --panel:#1c1b24;
+    --ink:#ecebf3;
+    --ink-2:#9d97ae;
+    --rule:#3a3748;
+    --rule-2:#2a2834;
+    --signal:#a98bff;
+    --signal-ink:#c2acff;
+    --winfill:#24222f;
+  }
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font:14px/1.6 var(--sans);letter-spacing:-.005em;
+}
+@media (min-width:960px){ body{font-size:15px} }
+a{color:var(--ink);text-underline-offset:3px;text-decoration-thickness:1px}
+a:hover{color:var(--signal-ink)}
+
+.band{border-top:1px solid var(--rule)}
+.band:first-child{border-top:0}
+.band.alt{background:var(--panel)}
+.inner{max-width:1200px;margin:0 auto;padding:1.5rem 1rem 2rem}
+@media (min-width:960px){
+  .inner{display:grid;grid-template-columns:11.5rem 1fr;gap:0 2.5rem;padding:1.9rem 2rem 2.6rem}
+  .gutter{grid-column:1;grid-row:1}
+  .main{grid-column:2;grid-row:1}
+}
+.gutter{margin:0 0 .9rem}
+.tag{font:11px/1.5 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);margin:0 0 .35rem}
+.gutter .note{font-size:11.5px;line-height:1.5;color:var(--ink-2);margin:.5rem 0 0}
+.main > :first-child{margin-top:0}
+p{margin:0 0 .8rem;max-width:62ch}
+
+.mast{padding-top:1.2rem}
+.wordmark{font:700 13px/1 var(--sans);letter-spacing:.34em;text-transform:uppercase;margin:0 0 1rem}
+.wordmark a{text-decoration:none}
+h1{font:400 clamp(30px,9vw,58px)/1 var(--narrow);letter-spacing:-.02em;margin:0 0 .5rem}
+.kicker{font:11px/1.5 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);margin:0 0 .5rem}
+
+/* ---------- the two ends of the answer ---------- */
+.ends{display:grid;gap:1.1rem;margin:1.2rem 0 0}
+@media (min-width:720px){ .ends{grid-template-columns:1fr 1fr;gap:2rem} }
+.end-b{border-top:2px solid var(--ink);padding-top:.5rem}
+.end-b.sig{border-top-color:var(--signal)}
+.end-b .big{display:block;font:400 clamp(30px,8vw,46px)/.98 var(--narrow);font-variant-numeric:tabular-nums;margin:0 0 .25rem}
+.end-b.sig .big{color:var(--signal-ink)}
+.end-b .sub{display:block;font-size:12px;line-height:1.5;color:var(--ink-2);max-width:36ch}
+
+/* ---------- the two clocks ---------- */
+.clocks{display:grid;gap:1.4rem}
+@media (min-width:720px){ .clocks{grid-template-columns:1fr 1fr;gap:2rem} }
+.clock{border-top:1px solid var(--rule);padding-top:.7rem}
+.clock label{display:block;font:11px/1.5 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);margin:0 0 .4rem}
+.clock input{
+  font:400 17px/1.2 var(--narrow);font-variant-numeric:tabular-nums;
+  color:var(--ink);background:transparent;border:0;border-bottom:2px solid var(--ink);
+  padding:.25rem 0;width:100%;max-width:12rem;border-radius:0;
+}
+.clock input:focus{outline:2px solid var(--signal);outline-offset:3px}
+.out{margin:.7rem 0 0;font-size:12.5px;line-height:1.55;color:var(--ink-2);max-width:40ch}
+.out b{font-weight:400;color:var(--signal-ink);font-family:var(--narrow);font-size:15px;letter-spacing:0}
+.out .verdict{
+  display:block;font:400 clamp(19px,5.5vw,26px)/1.12 var(--narrow);
+  color:var(--signal-ink);margin:0 0 .3rem;letter-spacing:0;
+}
+.out .verdict.calm{color:var(--ink)}
+.reset{
+  background:none;border:0;padding:0;margin:.6rem 0 0;font:11px/1.4 var(--sans);
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);cursor:pointer;text-decoration:underline;
+}
+
+/* ---------- the ruler ---------- */
+.rung-cap{
+  display:flex;flex-wrap:wrap;gap:.2rem .9rem;align-items:baseline;
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);
+  margin:0 0 1.7rem;  /* место для плашки TODAY, она висит НАД началом линейки */
+}
+.rung-cap strong{
+  font:400 20px/1 var(--narrow);letter-spacing:0;text-transform:none;color:var(--ink);
+  font-variant-numeric:tabular-nums;
+}
+
+/* VERTICAL by default (phone): time runs down the page. */
+.track{position:relative;height:var(--h,420px);margin:0 0 3.2rem}
+.axis{position:absolute;left:3.4rem;top:0;bottom:0;width:2px;background:var(--ink)}
+.tick{position:absolute;left:0;top:var(--p);width:3.4rem;height:0}
+.tick i{position:absolute;right:0;top:0;width:.55rem;height:2px;background:var(--rule);transform:translateY(-1px)}
+.tick em{
+  position:absolute;right:.85rem;top:0;transform:translateY(-50%);
+  font:400 11px/1 var(--narrow);font-style:normal;color:var(--ink-2);
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.tick.zero em{color:var(--ink)}
+.tick,.mark,.spanbar,.spanlab,.hand{z-index:1}
+
+.mark{position:absolute;left:0;top:var(--p);right:0;height:0}
+.mark .stem{position:absolute;left:3.4rem;top:0;width:.9rem;height:2px;background:var(--ink);transform:translateY(-1px)}
+.mark .lab{
+  position:absolute;top:0;margin-top:-.35rem;
+  left:4.5rem;width:calc(100% - 4.7rem);font-size:11.5px;line-height:1.35;
+}
+.mark.l1 .lab,.mark.l3 .lab{left:58%;width:40%}
+.mark.l2 .lab{left:4.5rem;width:calc(56% - 4.7rem)}
+.mark .n{display:block;font:400 15px/1.1 var(--narrow);font-variant-numeric:tabular-nums;margin:0 0 .1rem}
+.mark .who{display:block;color:var(--ink-2);font-size:11px;line-height:1.35}
+.mark.sig .stem{background:var(--signal);height:3px}
+.mark.sig .n{color:var(--signal-ink)}
+.mark.faint .stem{background:var(--rule);height:1px}
+.mark.faint .n{color:var(--ink-2)}
+
+/* a range is a band, not a point */
+.spanbar{
+  position:absolute;left:3.4rem;top:var(--a);height:calc(var(--b) - var(--a));
+  width:.9rem;background:var(--signal);min-height:2px;
+}
+.spanlab{position:absolute;left:4.5rem;top:var(--a);width:calc(100% - 4.7rem);font-size:11.5px;line-height:1.35;margin-top:-.1rem}
+.spanlab .n{display:block;font:400 17px/1.1 var(--narrow);color:var(--signal-ink);font-variant-numeric:tabular-nums;margin:0 0 .1rem}
+.spanlab .who{display:block;color:var(--ink-2);font-size:11px}
+
+/* the window the next ruler magnifies */
+.win{
+  position:absolute;left:2.5rem;top:var(--a);height:calc(var(--b) - var(--a));right:0;
+  background:var(--winfill);min-height:2px;z-index:0;
+}
+.winnote{font-size:12px;line-height:1.5;color:var(--ink-2);margin:0;max-width:64ch}
+.winnote b{font-weight:400;color:var(--ink);font-family:var(--narrow);font-size:15px;letter-spacing:0}
+.zoomer{display:none}
+
+/* today's hand */
+.hand{position:absolute;left:2.5rem;right:0;top:var(--p);height:2px;background:var(--signal);display:none}
+.hand.on{display:block}
+.hand em{
+  position:absolute;right:0;top:0;transform:translateY(-118%);font-style:normal;
+  font:11px/1.4 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--signal-ink);
+  background:var(--paper);padding:0 .25rem;
+}
+.band.alt .hand em{background:var(--panel)}
+
+/* HORIZONTAL from 720px up: time runs left to right. */
+@media (min-width:720px){
+  .track{height:var(--hh,180px);margin:0 0 .2rem}
+  .axis{left:0;right:0;top:34px;width:auto;height:2px}
+  .tick{left:var(--p);top:0;width:0;height:34px}
+  .tick i{right:auto;left:0;top:auto;bottom:0;width:2px;height:.5rem;transform:translateX(-1px)}
+  .tick em{right:auto;left:0;top:14px;transform:translateX(-50%)}
+  .tick.zero em{transform:none}
+  .tick.end em{transform:translateX(-100%)}
+
+  .mark{left:var(--p);top:0;right:auto;width:0;height:auto}
+  .mark .stem{left:0;top:34px;width:2px;height:26px;transform:translateX(-1px)}
+  /* ряды под осью: шаг 54px — подпись из трёх строк помещается целиком,
+     стебель тянется до своего ряда, поэтому подпись всегда читается
+     вместе со своей меткой */
+  .mark .lab{left:0;top:62px;margin-top:0;width:16rem}
+  .mark.l1 .stem,.mark.l2 .stem,.mark.l3 .stem{
+    background:linear-gradient(var(--ink) 0 26px,var(--rule) 26px);
+  }
+  .mark.l1 .stem{height:80px}
+  .mark.l1 .lab{left:0;top:116px;width:16rem}
+  .mark.l2 .stem{height:134px}
+  .mark.l2 .lab{left:0;top:170px;width:16rem}
+  .mark.l3 .stem{height:188px}
+  .mark.l3 .lab{left:0;top:224px;width:16rem}
+  /* правило .faint объявлено выше медиазапроса, поэтому здесь его надо
+     повторить: иначе волосяная метка получает жирный стебель дорожки */
+  .mark.faint .stem{background:var(--rule);width:1px}
+  .mark.end .lab{transform:translateX(-100%);text-align:right}
+  .mark .n{font-size:17px}
+
+  .spanbar{left:var(--a);top:34px;width:calc(var(--b) - var(--a));height:.9rem;min-width:2px;min-height:0}
+  .spanlab{left:var(--a);top:62px;width:15rem;margin-top:0}
+
+  .win{
+    left:var(--a);top:34px;width:calc(var(--b) - var(--a));height:auto;bottom:0;right:auto;
+    min-width:2px;min-height:0;
+  }
+  .zoomer{display:block;width:100%;height:26px;fill:var(--rule-2);margin:0 0 .5rem}
+
+  .hand{left:var(--p);right:auto;top:0;bottom:0;width:2px;height:auto}
+  .hand em{right:auto;left:0;top:0;transform:translate(-50%,-118%)}
+  /* у самых концов линейки плашку прижимаем внутрь, иначе её срезает край */
+  .hand.at-start em{transform:translate(0,-118%)}
+  .hand.at-end em{transform:translate(-100%,-118%)}
+}
+
+.foot{font-size:11.5px;line-height:1.6;color:var(--ink-2)}
+.foot p{max-width:70ch}
+hr.hair{border:0;border-top:1px solid var(--rule-2);margin:1.2rem 0}
+</style>
+</head>
+<body>
+
+<!-- ============ MASTHEAD + THE TWO ENDS ============ -->
+<div class="band">
+  <div class="inner mast">
+    <div class="gutter">
+      <p class="wordmark"><a href="index.html">KeepsUntil</a></p>
+      <p class="note">Poultry &middot; figures from USDA FoodKeeper</p>
+    </div>
+    <div class="main">
+      <p class="kicker">How long it keeps</p>
+      <h1>Canned chicken</h1>
+      <div class="ends">
+        <div class="end-b">
+          <span class="big">1825 days</span>
+          <span class="sub">Sealed, in the cupboard. That is the source&rsquo;s
+          &ldquo;5 years&rdquo;, counted from the day you bought it.</span>
+        </div>
+        <div class="end-b sig">
+          <span class="big">3 &ndash; 4 days</span>
+          <span class="sub">Open, in the fridge, counted from the day you opened it.
+          Two different clocks, not one &mdash; and a factor of 456 between them.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ THE TWO CLOCKS ============ -->
+<div class="band alt">
+  <div class="inner">
+    <div class="gutter">
+      <p class="tag">Set the hand</p>
+      <p class="note">One date each, because the two figures do not start on the
+      same day. Nothing is sent anywhere; the arithmetic happens inside this page.</p>
+    </div>
+    <div class="main">
+      <div class="clocks">
+        <div class="clock">
+          <label for="dBought">Bought the can on</label>
+          <input type="date" id="dBought">
+          <div class="out" id="oBought" role="status">Give a date and ruler 1 answers
+            with a day instead of a length.</div>
+          <button class="reset" type="button" id="rBought">clear</button>
+        </div>
+        <div class="clock">
+          <label for="dOpened">Opened the can on</label>
+          <input type="date" id="dOpened">
+          <div class="out" id="oOpened" role="status">This is the clock that usually
+            decides it. Ruler 3 is where the answer lands.</div>
+          <button class="reset" type="button" id="rOpened">clear</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ RULER 1 ============ -->
+<div class="band">
+  <div class="inner">
+    <div class="gutter">
+      <p class="tag">Ruler 1 of 3</p>
+      <p class="note">Sealed can, cupboard. Clock starts the day you bought it.</p>
+    </div>
+    <div class="main">
+      <div class="rung-cap"><strong>0 &ndash; 5 years</strong><span>1825 days &middot; linear &middot; full length</span></div>
+
+      <div class="track" style="--h:520px;--hh:195px">
+        <div class="axis"></div>
+        <div class="tick zero" style="--p:0%"><i></i><em>bought</em></div>
+        <div class="tick" style="--p:20%"><i></i><em>1 y</em></div>
+        <div class="tick" style="--p:40%"><i></i><em>2 y</em></div>
+        <div class="tick" style="--p:60%"><i></i><em>3 y</em></div>
+        <div class="tick" style="--p:80%"><i></i><em>4 y</em></div>
+        <div class="tick end" style="--p:100%"><i></i><em>5 y</em></div>
+
+        <div class="win" style="--a:0%;--b:3.288%">
+        </div>
+
+        <div class="mark faint l1" style="--p:0.219%">
+          <div class="stem"></div>
+          <div class="lab"><span class="n">4 days</span>
+            <span class="who">the opened-can figure is on this ruler too &mdash;
+            0.22&thinsp;% along, narrower than the hairline drawn for it</span></div>
+        </div>
+
+        <div class="mark end" style="--p:100%">
+          <div class="stem"></div>
+          <div class="lab"><span class="n">1825 days</span>
+            <span class="who">sealed, cupboard</span></div>
+        </div>
+
+        <div class="hand" id="handPantry"><em>today</em></div>
+      </div>
+
+      <svg class="zoomer" viewBox="0 0 1000 26" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 0 H32.9 L1000 26 H0 Z"/>
+      </svg>
+      <p class="winnote">Everything that happens after the can is opened happens
+      inside the shaded strip &mdash; the first 60 days of that ruler. Ruler 2 is
+      that window and nothing else, redrawn <b>&times;30.4</b> larger.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ RULER 2 ============ -->
+<div class="band alt">
+  <div class="inner">
+    <div class="gutter">
+      <p class="tag">Ruler 2 of 3</p>
+      <p class="note">Same zero, same linear spacing, one thirtieth of the length.</p>
+    </div>
+    <div class="main">
+      <div class="rung-cap"><strong>0 &ndash; 60 days</strong><span>the window above &middot; &times;30.4</span></div>
+
+      <div class="track" style="--h:360px;--hh:140px">
+        <div class="axis"></div>
+        <div class="tick zero" style="--p:0%"><i></i><em>0</em></div>
+        <div class="tick" style="--p:11.667%"><i></i><em>7 d</em></div>
+        <div class="tick" style="--p:23.333%"><i></i><em>14 d</em></div>
+        <div class="tick" style="--p:35%"><i></i><em>21 d</em></div>
+        <div class="tick" style="--p:46.667%"><i></i><em>28 d</em></div>
+        <div class="tick" style="--p:58.333%"><i></i><em>35 d</em></div>
+        <div class="tick" style="--p:70%"><i></i><em>42 d</em></div>
+        <div class="tick" style="--p:81.667%"><i></i><em>49 d</em></div>
+        <div class="tick end" style="--p:100%"><i></i><em>60 d</em></div>
+
+        <div class="win" style="--a:0%;--b:11.667%">
+        </div>
+
+        <div class="spanbar" style="--a:5%;--b:6.667%"></div>
+        <div class="spanlab" style="--a:5%">
+          <span class="n">3 &ndash; 4 days</span>
+          <span class="who">open, fridge</span>
+        </div>
+      </div>
+
+      <svg class="zoomer" viewBox="0 0 1000 26" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 0 H116.7 L1000 26 H0 Z"/>
+      </svg>
+      <p class="winnote">Even here the band is a sliver of the shaded week. Ruler 3
+      is that week and nothing else, redrawn <b>&times;8.6</b> larger &mdash; which
+      makes it <b>&times;260.7</b> the scale of ruler 1.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ RULER 3 ============ -->
+<div class="band">
+  <div class="inner">
+    <div class="gutter">
+      <p class="tag">Ruler 3 of 3</p>
+      <p class="note">Open can, fridge. Clock starts the day you opened it &mdash;
+      not the day you bought it.</p>
+    </div>
+    <div class="main">
+      <div class="rung-cap"><strong>0 &ndash; 7 days</strong><span>the window above &middot; &times;8.6</span></div>
+
+      <div class="track" style="--h:360px;--hh:140px">
+        <div class="axis"></div>
+        <div class="tick zero" style="--p:0%"><i></i><em>opened</em></div>
+        <div class="tick" style="--p:14.286%"><i></i><em>day 1</em></div>
+        <div class="tick" style="--p:28.571%"><i></i><em>day 2</em></div>
+        <div class="tick" style="--p:42.857%"><i></i><em>day 3</em></div>
+        <div class="tick" style="--p:57.143%"><i></i><em>day 4</em></div>
+        <div class="tick" style="--p:71.429%"><i></i><em>day 5</em></div>
+        <div class="tick" style="--p:85.714%"><i></i><em>day 6</em></div>
+        <div class="tick end" style="--p:100%"><i></i><em>day 7</em></div>
+
+        <div class="spanbar" style="--a:42.857%;--b:57.143%"></div>
+        <div class="spanlab" style="--a:42.857%">
+          <span class="n">3 &ndash; 4 days</span>
+          <span class="who">the whole of it, at last drawn big enough to read</span>
+        </div>
+
+        <div class="hand" id="handOpen"><em>today</em></div>
+      </div>
+
+      <p class="winnote">The zoom stops here: at this scale one day is a seventh of
+      the ruler, and the answer is a place you can point at.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ WHAT THE RULERS DID ============ -->
+<div class="band alt">
+  <div class="inner">
+    <div class="gutter">
+      <p class="tag">Read this once</p>
+      <p class="note">A scale that misleads is worse than a table.</p>
+    </div>
+    <div class="main">
+      <p><b>All three rulers are linear.</b> Equal distance is equal time. Nothing
+      is squeezed and there is no logarithmic scale here &mdash; on a log scale the
+      five years would look about four times the four days instead of four hundred
+      and fifty-six, which is a lie of two orders of magnitude.</p>
+      <p><b>Ruler 2 is a window cut out of ruler 1; ruler 3 is a window cut out of
+      ruler 2.</b> Each is redrawn at full length with its magnification printed
+      between them &mdash; &times;30.4, then &times;8.6, so ruler 3 is &times;260.7
+      the scale of ruler 1. The three are never the same scale and never pretend to be.</p>
+      <p><b>Opening the can costs a factor of 456.</b> 1825 days &divide; 4 days.
+      Take the shorter end of the 3-to-4-day figure and it is 608. We print the
+      gentler of the two.</p>
+      <p><b>Dates are counted in days, not in calendar years.</b> The cupboard answer
+      is your date plus 1825 days, the source&rsquo;s own number. A leap year in the
+      way makes that land a day before the calendar five-year anniversary, and we
+      would rather be a day short than a day long.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SOURCE ============ -->
+<div class="band">
+  <div class="inner">
+    <div class="gutter"><p class="tag">Source</p></div>
+    <div class="main foot">
+      <p>USDA FoodKeeper lists canned chicken as keeping 5 years in the pantry from
+      purchase, and 3 to 4 days refrigerated after opening. Both figures are quoted
+      as published; the rulers, the &times;456 and the dates are ours, worked out
+      from those two numbers and nothing else.</p>
+      <p>They describe a can kept at ordinary cupboard temperature and, once opened,
+      covered and refrigerated at 40&nbsp;&deg;F or below. They are not a verdict on
+      the can in your hand: one that is bulging, leaking, rusted through or smells
+      wrong is wrong whatever this page says.</p>
+      <hr class="hair">
+      <p><a href="index.html">All foods, on one ruler</a> &middot; design prototype,
+      direction A &mdash; &ldquo;the dial&rdquo;.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  /* Только две величины из источника. Всё остальное считается из них. */
+  var PANTRY_DAYS = 1825;          /* "5 years", from purchase   */
+  var OPEN_MIN = 3, OPEN_MAX = 4;  /* "3 to 4 days", from opening */
+  var R3_SPAN = 7;                 /* ruler 3 runs 0 to 7 days    */
+
+  var elB = document.getElementById('dBought');
+  var elO = document.getElementById('dOpened');
+  var outB = document.getElementById('oBought');
+  var outO = document.getElementById('oOpened');
+  var handP = document.getElementById('handPantry');
+  var handO = document.getElementById('handOpen');
+
+  function parseDate(v){
+    if(!v){ return null; }
+    var p = v.split('-');
+    if(p.length !== 3){ return null; }
+    /* полдень по местному времени: сдвиг часового пояса не съедает сутки */
+    var d = new Date(+p[0], +p[1] - 1, +p[2], 12, 0, 0, 0);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  function today(){
+    var n = new Date();
+    return new Date(n.getFullYear(), n.getMonth(), n.getDate(), 12, 0, 0, 0);
+  }
+  function addDays(d, n){
+    var x = new Date(d.getTime());
+    x.setDate(x.getDate() + n);
+    return x;
+  }
+  function daysBetween(a, b){
+    return Math.round((b.getTime() - a.getTime()) / 86400000);
+  }
+  function fmt(d){
+    return d.toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric'});
+  }
+  function plural(n, w){
+    return n + ' ' + w + (Math.abs(n) === 1 ? '' : 's');
+  }
+  function setHand(el, pct, on){
+    if(!on){ el.className = 'hand'; return; }
+    var p = pct < 0 ? 0 : (pct > 100 ? 100 : pct);
+    el.style.setProperty('--p', p + '%');
+    el.className = 'hand on' + (p < 8 ? ' at-start' : (p > 92 ? ' at-end' : ''));
+  }
+
+  function renderPantry(){
+    var d = parseDate(elB.value), html;
+    if(!d){
+      outB.innerHTML = 'Give a date and ruler 1 answers with a day instead of a length.';
+      setHand(handP, 0, false);
+      return;
+    }
+    var n = daysBetween(d, today());
+    var until = addDays(d, PANTRY_DAYS);
+    if(n < 0){
+      html = '<span class="verdict calm">That day has not happened yet.</span>' +
+             'Bought then, the 5-year figure would run to <b>' + fmt(until) + '</b>.';
+    } else if(n <= PANTRY_DAYS){
+      html = '<span class="verdict calm">Day ' + n + ' of ' + PANTRY_DAYS + '.</span>' +
+             'Sealed in the cupboard, the source&rsquo;s 5 years run to <b>' + fmt(until) +
+             '</b> &mdash; ' + plural(PANTRY_DAYS - n, 'day') + ' from today.';
+    } else {
+      html = '<span class="verdict">Past it, by ' + plural(n - PANTRY_DAYS, 'day') + '.</span>' +
+             'The 5-year figure ran out on <b>' + fmt(until) + '</b>.';
+    }
+    outB.innerHTML = html;
+    setHand(handP, (n / PANTRY_DAYS) * 100, n >= 0);
+  }
+
+  function renderOpened(){
+    var d = parseDate(elO.value), html;
+    if(!d){
+      outO.innerHTML = 'This is the clock that usually decides it. Ruler 3 is where the answer lands.';
+      setHand(handO, 0, false);
+      return;
+    }
+    var n = daysBetween(d, today());
+    var d3 = addDays(d, OPEN_MIN), d4 = addDays(d, OPEN_MAX);
+    if(n < 0){
+      html = '<span class="verdict calm">That day has not happened yet.</span>' +
+             'Opened then, the window would close between <b>' + fmt(d3) + '</b> and <b>' + fmt(d4) + '</b>.';
+    } else if(n < OPEN_MIN){
+      html = '<span class="verdict calm">Still inside the window &mdash; day ' + n + '.</span>' +
+             'The 3-to-4-day count runs out between <b>' + fmt(d3) + '</b> and <b>' + fmt(d4) + '</b>.';
+    } else if(n <= OPEN_MAX){
+      html = '<span class="verdict">Day ' + n + ' &mdash; the far end of it.</span>' +
+             'The published window closes on <b>' + fmt(d4) + '</b>. Today is the last of it.';
+    } else {
+      html = '<span class="verdict">Past the window, by ' + plural(n - OPEN_MAX, 'day') + '.</span>' +
+             'Day ' + n + ' since opening; the 3-to-4-day window closed on <b>' + fmt(d4) + '</b>' +
+             (n > R3_SPAN ? ', which is off the far end of ruler 3.' : '.');
+    }
+    outO.innerHTML = html;
+    setHand(handO, (n / R3_SPAN) * 100, n >= 0);
+  }
+
+  elB.addEventListener('input', renderPantry);
+  elB.addEventListener('change', renderPantry);
+  elO.addEventListener('input', renderOpened);
+  elO.addEventListener('change', renderOpened);
+  document.getElementById('rBought').addEventListener('click', function(){ elB.value = ''; renderPantry(); });
+  document.getElementById('rOpened').addEventListener('click', function(){ elO.value = ''; renderOpened(); });
+
+  renderPantry();
+  renderOpened();
+})();
+</script>
+
+</body>
+</html>

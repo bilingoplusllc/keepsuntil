@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeepsUntil — четыре направления</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:#11131a;color:#e7e9ef;display:flex;height:100vh;overflow:hidden}
+aside{width:290px;flex:0 0 290px;padding:18px;overflow-y:auto;
+  border-right:1px solid #2a2e3c;background:#171a23}
+h1{font-size:15px;margin:0 0 4px;letter-spacing:.02em}
+.sub{font-size:12px;color:#8d93a6;margin:0 0 18px}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;
+  color:#8d93a6;margin:18px 0 6px;font-weight:600}
+a.pick{display:block;padding:9px 10px;margin:0 0 4px;border-radius:6px;
+  color:#e7e9ef;text-decoration:none;border:1px solid transparent;font-size:14px}
+a.pick:hover{background:#20242f}
+a.pick.on{background:#20242f;border-color:#4d5costume}
+a.pick.on{border-color:#5b6alt}
+a.pick.on{border-color:#586}
+.k{font-size:11px;color:#8d93a6;display:block;margin-top:2px}
+.sc{font-size:11px;color:#8d93a6;margin:2px 0 0}
+.bar{display:flex;gap:6px;padding:10px 14px;border-bottom:1px solid #2a2e3c;
+  background:#171a23;align-items:center}
+.bar button{font:inherit;font-size:13px;padding:5px 11px;border-radius:6px;
+  border:1px solid #333846;background:#20242f;color:#e7e9ef;cursor:pointer}
+.bar button.on{background:#e7e9ef;color:#11131a;border-color:#e7e9ef}
+.bar span{font-size:12px;color:#8d93a6;margin-left:auto}
+main{flex:1;display:flex;flex-direction:column;min-width:0}
+.stage{flex:1;display:flex;justify-content:center;align-items:flex-start;
+  overflow:auto;background:#0b0d12;padding:14px}
+iframe{border:0;background:#fff;box-shadow:0 0 0 1px #2a2e3c;height:100%}
+</style>
+</head>
+<body>
+<aside>
+<h1>KeepsUntil — четыре направления</h1>
+<p class="sub">02.09.2026 · заказаны по BRIEF.md, судьи не видели друг друга</p>
+
+<h2>Направления</h2>
+<a class="pick" href="#" data-d="label">Бирка на банке<span class="k">весь ответ на одном экране</span><span class="sc">читатель 9 · дизайн 7 · правда 7,5 → <b>7,8</b></span></a>
+<a class="pick" href="#" data-d="dial">Циферблат<span class="k">срок как отрезок на шкале</span><span class="sc">читатель 5 · дизайн 8 · правда 9 → <b>7,3</b></span></a>
+<a class="pick" href="#" data-d="date">Дата, а не срок<span class="k">поле даты выше всего</span><span class="sc">читатель 8 · дизайн 6 · правда 6,5 → <b>6,8</b></span></a>
+<a class="pick" href="#" data-d="spread">Разворот<span class="k">редакционная подача</span><span class="sc">читатель 4 · дизайн 7 · правда 8 → <b>6,3</b></span></a>
+
+<h2>Для сравнения</h2>
+<a class="pick" href="#" data-d="live">Что сейчас на сайте<span class="k">первая попытка, её и забраковали</span></a>
+
+<h2>Как читать</h2>
+<p class="sub">Судьи разошлись, и это хорошо: «бирка» выигрывает у читателя, «циферблат» — у дизайнера и у правдивости. Балл — не решение, решение за глазами.</p>
+</aside>
+<main>
+<div class="bar">
+  <button data-p="product.html" class="on">Страница продукта</button>
+  <button data-p="index.html">Главная</button>
+  <button data-w="390">Телефон 390</button>
+  <button data-w="1280" class="on">Экран 1280</button>
+  <span id="now"></span>
+</div>
+<div class="stage"><iframe id="f" title="направление"></iframe></div>
+</main>
+<script>
+var state = {d: 'label', p: 'product.html', w: 1280};
+var LIVE = {'product.html': 'http://localhost:8822/canned-chicken/',
+            'index.html': 'http://localhost:8822/'};
+function draw() {
+  var f = document.getElementById('f');
+  f.style.width = state.w + 'px';
+  f.src = (state.d === 'live') ? LIVE[state.p] : (state.d + '/' + state.p);
+  document.getElementById('now').textContent =
+    state.d + ' · ' + state.p + ' · ' + state.w + 'px';
+  var links = document.querySelectorAll('a.pick');
+  for (var i = 0; i < links.length; i++) {
+    links[i].className = 'pick' + (links[i].getAttribute('data-d') === state.d ? ' on' : '');
+  }
+  var bs = document.querySelectorAll('.bar button');
+  for (var j = 0; j < bs.length; j++) {
+    var b = bs[j];
+    var on = (b.getAttribute('data-p') === state.p) ||
+             (b.getAttribute('data-w') === String(state.w));
+    b.className = on ? 'on' : '';
+  }
+}
+document.addEventListener('click', function (e) {
+  var a = e.target.closest ? e.target.closest('a.pick') : null;
+  if (a) { e.preventDefault(); state.d = a.getAttribute('data-d'); draw(); return; }
+  var b = e.target.closest ? e.target.closest('.bar button') : null;
+  if (b) {
+    if (b.getAttribute('data-p')) state.p = b.getAttribute('data-p');
+    if (b.getAttribute('data-w')) state.w = +b.getAttribute('data-w');
+    draw();
+  }
+});
+draw();
+</script>
+</body>
+</html>

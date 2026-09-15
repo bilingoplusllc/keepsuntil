@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canned chicken &mdash; how long it keeps | KeepsUntil</title>
+<style>
+/* ============================================================
+   THE SPREAD — product page. Same system as index.html.
+   Один сигнальный цвет, одно значение: жёлтый = короткое окно.
+   ============================================================ */
+
+:root{
+  color-scheme: light dark;
+
+  --stock:      #e6e6e2;
+  --stock-deep: #dcdcd7;
+  --ink:        #101011;
+  --ink-2:      #56564f;
+  --rule:       #bfbfb8;
+  --rule-hair:  #cdcdc6;
+  --signal:     #f2e400;
+  --on-signal:  #101011;
+  --field:      #f2f2ef;
+
+  --display: "Arial Black","Arial Bold",Helvetica,Arial,sans-serif;
+  --text: "Helvetica Neue",Helvetica,Arial,sans-serif;
+
+  --u: 6px;
+  --pad: clamp(18px, 4vw, 56px);
+  --maxw: 1360px;
+}
+
+@media (prefers-color-scheme: dark){
+  :root{
+    --stock:      #131312;
+    --stock-deep: #1c1c1a;
+    --ink:        #ececE4;
+    --ink-2:      #8d8d84;
+    --rule:       #35352f;
+    --rule-hair:  #2a2a26;
+    --signal:     #f4e72a;
+    --on-signal:  #101011;
+    --field:      #202020;
+  }
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--stock);color:var(--ink);
+  font-family:var(--text);font-size:16px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+p{margin:0 0 calc(var(--u)*3)}
+
+.sheet{max-width:var(--maxw);margin:0 auto;padding:0 var(--pad) calc(var(--u)*14)}
+
+.folio{
+  display:flex;flex-wrap:wrap;gap:calc(var(--u)*2) calc(var(--u)*4);align-items:baseline;
+  padding:calc(var(--u)*2.5) 0;border-bottom:1px solid var(--ink);
+  font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2);
+}
+.folio b{font-family:var(--display);font-weight:900;letter-spacing:.12em;color:var(--ink)}
+/* ссылки — чернилами: жёлтый значит ТОЛЬКО «короткое окно» */
+.folio a{text-decoration:none;border-bottom:1px solid var(--ink);color:var(--ink)}
+.folio a:hover{background:var(--ink);color:var(--stock)}
+.folio .spacer{flex:1 1 auto}
+
+.kicker{font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-2);margin:0 0 calc(var(--u)*2)}
+.tiny{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2)}
+.note{font-size:.8rem;line-height:1.5;color:var(--ink-2);max-width:32em}
+.hl{background:var(--signal);color:var(--on-signal);padding:0 .07em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+
+/* ---------- masthead: the food name runs the full measure ---------- */
+.masthead{padding:calc(var(--u)*7) 0 calc(var(--u)*3)}
+h1{
+  font-family:var(--display);font-weight:900;
+  font-size:clamp(2.2rem, 11.2vw, 9.5rem);
+  line-height:.86;letter-spacing:-.045em;margin:0;
+  hyphens:none;overflow-wrap:break-word;
+}
+.standfirst{
+  display:grid;grid-template-columns:1fr;gap:calc(var(--u)*3);
+  padding-top:calc(var(--u)*3);
+}
+.standfirst p{font-size:clamp(.95rem,1.2vw,1.1rem);line-height:1.5;margin:0;max-width:32em}
+
+.rule-heavy{height:9px;background:var(--ink)}
+.rule-hair{height:1px;background:var(--rule)}
+
+/* ---------- THE ONE MOVE: one linear scale, both states ---------- */
+.spread{padding:calc(var(--u)*7) 0 calc(var(--u)*5)}
+.state{margin-bottom:calc(var(--u)*6)}
+.state-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:calc(var(--u)*2) calc(var(--u)*4);margin-bottom:calc(var(--u)*2)}
+.state-n{
+  font-family:var(--display);font-weight:900;
+  font-size:clamp(3rem,9vw,6.6rem);line-height:.8;letter-spacing:-.05em;
+}
+.state-n .unit{font-size:.2em;letter-spacing:.2em;text-transform:uppercase;display:block;margin-top:.7em;color:var(--ink-2);font-family:var(--text);font-weight:400}
+.state-words{font-size:.86rem;line-height:1.45;color:var(--ink-2);max-width:26em}
+.state-words strong{color:var(--ink)}
+.state-yellow .state-n{background:var(--signal);color:var(--on-signal);padding:.06em .12em}
+.state-yellow .state-n .unit{color:rgba(16,16,17,.62)}
+
+.track{margin-top:calc(var(--u)*2)}
+.track .lab{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);margin:0 0 4px}
+.bar{height:16px;min-width:3px;display:block}
+.bar-before{background:var(--ink)}
+.bar-after{background:var(--signal)}
+
+/* magnifier: pure geometry, no text inside the svg */
+.magnifier{display:block;width:100%;height:38px;margin:0}
+.magnifier line{stroke:var(--rule);stroke-width:1;vector-effect:non-scaling-stroke}
+.magnifier line.solid{stroke:var(--ink)}
+
+.detail{display:flex;width:100%;height:34px;border:1px solid var(--ink)}
+.detail span{
+  flex:1 1 0;background:var(--signal);border-right:1px solid rgba(16,16,17,.35);
+  color:var(--on-signal);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:center;
+}
+.detail span:last-child{border-right:0}
+
+.verdict{
+  font-family:var(--display);font-weight:900;
+  font-size:clamp(1.25rem,3.2vw,2.4rem);line-height:1.05;letter-spacing:-.03em;
+  margin:calc(var(--u)*6) 0 calc(var(--u)*2);max-width:22em;
+}
+/* та же поправка, что в h1: подложка highlight — собственный inline-block */
+.verdict .hl{display:inline-block;line-height:.85;padding:.08em .08em .06em;vertical-align:baseline}
+
+/* ---------- band grid ---------- */
+.band{padding:calc(var(--u)*8) 0 calc(var(--u)*4)}
+.band-grid{display:grid;grid-template-columns:1fr;gap:calc(var(--u)*4)}
+h2{font-family:var(--display);font-weight:900;font-size:clamp(1.15rem,2.1vw,1.6rem);line-height:1;letter-spacing:-.02em;margin:0 0 calc(var(--u)*2)}
+
+/* ---------- the date device ---------- */
+.dates{display:grid;grid-template-columns:1fr;gap:calc(var(--u)*5)}
+.card{background:var(--stock-deep);padding:calc(var(--u)*4)}
+.card .tiny{display:block;margin-bottom:calc(var(--u)*1.5)}
+.card h3{font-family:var(--display);font-weight:900;font-size:1.05rem;letter-spacing:-.015em;margin:0 0 calc(var(--u)*2);line-height:1.15}
+label{display:block;font-size:.8rem;color:var(--ink-2);margin-bottom:calc(var(--u))}
+input[type=date]{
+  font-family:var(--text);font-size:1rem;width:100%;
+  padding:calc(var(--u)*1.5) calc(var(--u)*1.5);
+  background:var(--field);color:var(--ink);
+  border:1px solid var(--ink);border-radius:0;
+}
+input[type=date]:focus{outline:3px solid var(--ink);outline-offset:2px}
+.answer{margin-top:calc(var(--u)*3);border-top:1px solid var(--rule);padding-top:calc(var(--u)*2.5)}
+.answer .lab{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);margin:0 0 calc(var(--u))}
+.answer .out{
+  font-family:var(--display);font-weight:900;
+  font-size:clamp(1.3rem,3.4vw,2rem);line-height:1.05;letter-spacing:-.03em;
+  margin:0;
+}
+.answer .out.set{background:var(--signal);color:var(--on-signal);display:inline;padding:.05em .12em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.answer .sub{font-size:.8rem;color:var(--ink-2);margin:calc(var(--u)*2) 0 0;line-height:1.45}
+.card.governs{background:transparent;border:9px solid var(--ink);padding:calc(var(--u)*4)}
+
+/* ---------- prose ---------- */
+.prose{columns:1;font-size:.92rem;line-height:1.6}
+.prose p{margin:0 0 calc(var(--u)*2.5);break-inside:avoid}
+.prose p:first-child::first-line{font-weight:700}
+
+.caveats{border-top:1px solid var(--ink);padding-top:calc(var(--u)*3)}
+.caveats ul{margin:0;padding:0;list-style:none}
+.caveats li{font-size:.82rem;line-height:1.5;color:var(--ink-2);padding:calc(var(--u)*2) 0;border-bottom:1px solid var(--rule-hair);max-width:40em}
+.caveats li strong{color:var(--ink)}
+
+.colophon{border-top:9px solid var(--ink);padding-top:calc(var(--u)*3);margin-top:calc(var(--u)*8)}
+.colophon p{font-size:.78rem;line-height:1.5;color:var(--ink-2);max-width:36em;margin:0 0 calc(var(--u)*1.5)}
+
+/* ============================ 760px ============================ */
+@media (min-width:760px){
+  .standfirst{grid-template-columns:1fr 1fr;gap:calc(var(--u)*8)}
+  .standfirst .right{padding-left:calc(var(--u)*4);border-left:1px solid var(--rule)}
+  .band-grid{grid-template-columns:200px 1fr;gap:calc(var(--u)*8)}
+  .dates{grid-template-columns:1fr 1fr}
+  .dates .governs{grid-column:1 / -1}
+  .prose{columns:2;column-gap:calc(var(--u)*8)}
+  .state-head{flex-wrap:nowrap}
+  .bar{height:22px}
+}
+/* ============================ 1100px ============================ */
+@media (min-width:1100px){
+  .band-grid{grid-template-columns:240px 1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+  <header class="folio">
+    <b>KeepsUntil</b>
+    <a href="index.html">All fifteen foods</a>
+    <span class="spacer"></span>
+    <span>Poultry &middot; USDA FoodKeeper</span>
+  </header>
+
+  <!-- ============ MASTHEAD ============ -->
+  <section class="masthead">
+    <p class="kicker">Sealed against opened &middot; the widest gap in the sample</p>
+    <h1>Canned chicken</h1>
+    <div class="standfirst">
+      <p>
+        In the cupboard, unopened, this is one of the longest-lasting things you own:
+        the USDA gives it <strong>five years</strong> from the day you bought it.
+      </p>
+      <p class="right">
+        The moment the lid comes off, the same food is on a
+        <span class="hl">three-to-four-day</span> clock in the fridge. Nothing about
+        the chicken changed. The container did.
+      </p>
+    </div>
+  </section>
+
+  <div class="rule-heavy"></div>
+
+  <!-- ============ THE ONE MOVE ============ -->
+  <section class="spread">
+
+    <div class="state">
+      <div class="state-head">
+        <span class="state-n">1,825<span class="unit">days sealed</span></span>
+        <span class="state-words">
+          <strong>Pantry, unopened, counted from purchase.</strong>
+          FoodKeeper prints this one as &ldquo;5 years&rdquo;. It is a single figure,
+          not a range: the source gives no shorter version of it.
+        </span>
+      </div>
+      <div class="track">
+        <p class="lab">Drawn to scale &mdash; the full width of this page is 1,825 days</p>
+        <span class="bar bar-before" style="width:100%"></span>
+      </div>
+    </div>
+
+    <div class="state state-yellow">
+      <div class="state-head">
+        <span class="state-n">4<span class="unit">days opened</span></span>
+        <span class="state-words">
+          <strong>Refrigerated, once the can is open.</strong>
+          FoodKeeper prints &ldquo;3 days to 4 days&rdquo;. Four is the generous end;
+          three is the one to plan around.
+        </span>
+      </div>
+      <div class="track">
+        <p class="lab">The same scale, the same page width</p>
+        <span class="bar bar-after" style="width:0.219%"></span>
+
+        <!-- the sliver, opened out: 1000 / 2.19 = 456, which is the multiplier itself -->
+        <svg class="magnifier" viewBox="0 0 1000 38" preserveAspectRatio="none" role="img"
+             aria-label="The four-day bar above, magnified to the full width below">
+          <line class="solid" x1="0.5" y1="0" x2="0.5" y2="38"></line>
+          <line class="solid" x1="2.19" y1="0" x2="1000" y2="38"></line>
+          <line x1="250" y1="30" x2="250" y2="38"></line>
+          <line x1="500" y1="30" x2="500" y2="38"></line>
+          <line x1="750" y1="30" x2="750" y2="38"></line>
+        </svg>
+
+        <div class="detail">
+          <span>Day 1</span><span>Day 2</span><span>Day 3</span><span>Day 4</span>
+        </div>
+        <p class="lab" style="margin-top:8px">
+          Detail: the yellow bar above, magnified 456 times &mdash; which is the same
+          number as the multiplier, and could not be anything else
+        </p>
+      </div>
+    </div>
+
+    <p class="verdict">
+      The open window is <span class="hl">0.219%</span> of the sealed one.
+    </p>
+    <p class="note">
+      That is not a rounding difference and it is not a warning to be filed away.
+      A can that was fine on a shelf for years is on a three-day clock from the
+      minute it is open, and the five years do not carry over: the short figure
+      replaces the long one, it never extends it.
+    </p>
+
+  </section>
+
+  <div class="rule-heavy"></div>
+
+  <!-- ============ THE DATE DEVICE ============ -->
+  <section class="band">
+    <div class="band-grid">
+      <div class="rail">
+        <p class="tiny">Your can</p>
+        <h2>A date,<br>not a span</h2>
+        <p class="note">
+          Two clocks, two questions, two separate fields &mdash; because they start
+          from different events and one cannot be worked out from the other. Fill in
+          whichever you know.
+        </p>
+        <p class="note">Nothing you type leaves this page.</p>
+      </div>
+
+      <div class="dates">
+
+        <div class="card">
+          <span class="tiny">Clock one</span>
+          <h3>Still sealed</h3>
+          <label for="bought">The day you bought it</label>
+          <input type="date" id="bought">
+          <div class="answer">
+            <p class="lab">Pantry, unopened &mdash; 1,825 days</p>
+            <p class="out" id="out-sealed">&mdash;</p>
+            <p class="sub" id="sub-sealed">Cool, dry cupboard. A quality figure, not a cliff edge.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <span class="tiny">Clock two</span>
+          <h3>Already open</h3>
+          <label for="opened">The day you opened it</label>
+          <input type="date" id="opened">
+          <div class="answer">
+            <p class="lab">Refrigerated, opened &mdash; 3 to 4 days</p>
+            <p class="out" id="out-open">&mdash;</p>
+            <p class="sub" id="sub-open">Assumes 40&deg;F / 4&deg;C or below, contents covered.</p>
+          </div>
+        </div>
+
+        <div class="card governs">
+          <span class="tiny">Which one governs</span>
+          <p class="out" id="out-verdict" style="margin-top:calc(var(--u)*1.5)">&mdash;</p>
+          <p class="sub" id="sub-verdict">
+            Once both dates exist, the opened clock always finishes first &mdash; by
+            years. Type a date above and this line will say which day is actually yours.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="rule-hair"></div>
+
+  <!-- ============ PROSE ============ -->
+  <section class="band">
+    <div class="band-grid">
+      <div class="rail">
+        <p class="tiny">Why the gap</p>
+        <h2>What the lid<br>was doing</h2>
+      </div>
+      <div>
+        <div class="prose">
+          <p>
+            A sealed can is not merely a closed container. It was heated after it was
+            filled, and it holds no living organisms and no fresh air. There is nothing
+            inside to spoil the food and nothing getting in. What limits the five years
+            is slow chemical change &mdash; texture, colour, flavour drifting &mdash;
+            rather than anything that would make you ill.
+          </p>
+          <p>
+            Opening it undoes every one of those conditions at once. Air, moving hands,
+            a spoon, the air of the kitchen: the food goes from sterile and sealed to
+            an ordinary cooked poultry dish, and cooked poultry in a fridge is a
+            three-to-four-day proposition. That is exactly what the FoodKeeper figure
+            says. It is not a stricter rule for canned chicken; it is the normal rule
+            for the food that was inside.
+          </p>
+          <p>
+            This is why the two figures cannot be added, averaged, or read as a range.
+            They describe two different foods in two different states, and only one of
+            them is on your worktop.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CAVEATS, ALL IN ONE PLACE ============ -->
+  <section class="band">
+    <div class="band-grid">
+      <div class="rail">
+        <p class="tiny">Read this before you rely on a date</p>
+        <h2>Where these<br>figures stop</h2>
+      </div>
+      <div class="caveats">
+        <ul>
+          <li><strong>These are quality figures, not safety guarantees.</strong>
+            The five years describe how long the contents stay good, not a day on which
+            they turn. Nothing here overrides how the food looks and smells.</li>
+          <li><strong>The can decides before the calendar does.</strong>
+            A can that is bulging, leaking, badly dented at a seam, or rusted through is
+            thrown out whatever date this page prints.</li>
+          <li><strong>The five years count from purchase, not from packing.</strong>
+            That is the FoodKeeper's own basis for this entry, and it is why the field
+            above asks when you bought it.</li>
+          <li><strong>The three-to-four days assume a cold fridge.</strong>
+            40&deg;F / 4&deg;C or below, contents covered. A warmer fridge is a shorter
+            figure, and this page cannot tell you how much shorter.</li>
+          <li><strong>The freezer is not covered for this food.</strong>
+            The FoodKeeper carries no freezer figure for canned chicken, so this page
+            prints none. An absent figure is not permission.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer class="colophon">
+    <p><strong style="color:var(--ink)">Source.</strong>
+      USDA FoodKeeper, entry &ldquo;Canned chicken&rdquo;, category Poultry. Both spans
+      are reproduced in the source's own wording: pantry from purchase, 5 years;
+      refrigerator after opening, 3 days to 4 days. FoodKeeper data is published by the
+      U.S. Department of Agriculture and is in the public domain.</p>
+    <p><strong style="color:var(--ink)">Worked out here.</strong>
+      1,825 days is 5 years at 365 days a year. The multiplier 456 is 1,825 &divide; 4
+      &mdash; the longer sealed figure over the <em>longer</em> opened figure, which is
+      the mildest reading of the gap available. 4 &divide; 1,825 = 0.219%. The
+      magnification in the detail strip is the same 456, because the strip is that bar
+      drawn at full page width. Dates are calculated in your browser and never sent
+      anywhere.</p>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  var MONTHS = ["January","February","March","April","May","June","July",
+                "August","September","October","November","December"];
+
+  function parseISO(v){
+    if(!v){ return null; }
+    var p = v.split("-");
+    if(p.length !== 3){ return null; }
+    var y = parseInt(p[0],10), m = parseInt(p[1],10), d = parseInt(p[2],10);
+    if(!y || !m || !d){ return null; }
+    var dt = new Date(y, m-1, d);
+    if(dt.getFullYear() !== y || dt.getMonth() !== m-1 || dt.getDate() !== d){ return null; }
+    return dt;
+  }
+  function addDays(dt, n){
+    var x = new Date(dt.getTime());
+    x.setDate(x.getDate() + n);
+    return x;
+  }
+  /* explicit month names: never locale-dependent */
+  function fmt(dt){
+    return MONTHS[dt.getMonth()] + " " + dt.getDate() + ", " + dt.getFullYear();
+  }
+  /* свой разделитель тысяч: toLocaleString зависит от локали браузера */
+  function num(n){
+    var s = String(n), out = "", c = 0;
+    for(var i = s.length - 1; i >= 0; i--){
+      out = s.charAt(i) + out;
+      c++;
+      if(c % 3 === 0 && i > 0){ out = "," + out; }
+    }
+    return out;
+  }
+  function daysBetween(a, b){
+    return Math.round((b.getTime() - a.getTime()) / 86400000);
+  }
+
+  var elBought  = document.getElementById("bought");
+  var elOpened  = document.getElementById("opened");
+  var outSealed = document.getElementById("out-sealed");
+  var subSealed = document.getElementById("sub-sealed");
+  var outOpen   = document.getElementById("out-open");
+  var subOpen   = document.getElementById("sub-open");
+  var outVerd   = document.getElementById("out-verdict");
+  var subVerd   = document.getElementById("sub-verdict");
+
+  function set(el, text, lit){
+    el.textContent = text;
+    if(lit){ el.className = "out set"; } else { el.className = "out"; }
+  }
+
+  function render(){
+    var b = parseISO(elBought.value);
+    var o = parseISO(elOpened.value);
+
+    if(b){
+      set(outSealed, fmt(addDays(b, 1825)), false);
+      subSealed.textContent = "1,825 days from " + fmt(b) +
+        ", unopened, in a cool dry cupboard. A quality figure, not a cliff edge.";
+    } else {
+      set(outSealed, "—", false);
+      subSealed.textContent = "Cool, dry cupboard. A quality figure, not a cliff edge.";
+    }
+
+    if(o){
+      var d3 = addDays(o, 3), d4 = addDays(o, 4);
+      set(outOpen, fmt(d3), true);
+      subOpen.textContent = "Three days from " + fmt(o) + ". The USDA range runs to " +
+        fmt(d4) + "; " + fmt(d3) + " is the one to plan around. Fridge at 40°F / 4°C or below, contents covered.";
+    } else {
+      set(outOpen, "—", false);
+      subOpen.textContent = "Assumes 40°F / 4°C or below, contents covered.";
+    }
+
+    if(o){
+      set(outVerd, "This can: " + fmt(addDays(o, 3)), true);
+      if(b && o.getTime() < b.getTime()){
+        subVerd.textContent = "The opened date you gave is earlier than the purchase date, " +
+          "so one of the two is wrong. The opened clock is the one that governs either way.";
+      } else if(b){
+        /* величина печатается только ПОСЧИТАННОЙ, а не на глазок */
+        var gap = daysBetween(addDays(o, 3), addDays(b, 1825));
+        subVerd.textContent = "The opened clock governs. It finishes " + num(gap) +
+          " days before the date this can would have carried unopened, so the five " +
+          "years no longer apply to it.";
+      } else {
+        subVerd.textContent = "The opened clock governs. Whatever the sealed date " +
+          "would have been, it has been replaced: the short figure never adds to the long one.";
+      }
+    } else if(b){
+      set(outVerd, "Sealed until " + fmt(addDays(b, 1825)), false);
+      subVerd.textContent = "Nothing has been opened yet, so the pantry clock governs. " +
+        "The day it is opened, that date is replaced by one three days later.";
+    } else {
+      set(outVerd, "—", false);
+      subVerd.textContent = "Once both dates exist, the opened clock always finishes first — by " +
+        "years. Type a date above and this line will say which day is actually yours.";
+    }
+  }
+
+  elBought.addEventListener("input", render);
+  elOpened.addEventListener("input", render);
+  elBought.addEventListener("change", render);
+  elOpened.addEventListener("change", render);
+  render();
+})();
+</script>
+</body>
+</html>

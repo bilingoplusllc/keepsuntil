@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeepsUntil — until when does it keep?</title>
+<meta name="description" content="USDA FoodKeeper storage times, answered as a date on your calendar. Tell it the day you stored it and every figure becomes a date.">
+<meta name="color-scheme" content="light dark">
+<style>
+:root{
+  --paper:#ffffff;
+  --ink:#10131b;
+  --muted:#61677a;
+  --rule:#dfe2ea;
+  --rule-strong:#10131b;
+  --signal:#2b31d8;
+  --field:#f4f5f9;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#0c0e13;
+    --ink:#e9ebf2;
+    --muted:#959bab;
+    --rule:#242835;
+    --rule-strong:#e9ebf2;
+    --signal:#98a0ff;
+    --field:#161a23;
+  }
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:15px;
+  line-height:1.45;
+  font-feature-settings:"tnum" 1;
+  font-variant-numeric:tabular-nums;
+}
+.topbar{height:7px;background:var(--rule-strong)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+
+/* ---------- the question, first, above everything ---------- */
+.masthead{padding:22px 0 0}
+.brand{
+  margin:0;
+  font-size:11px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.ask{
+  margin:10px 0 0;
+  font-size:clamp(40px,11vw,78px);
+  line-height:.95;
+  letter-spacing:-.04em;
+  font-weight:800;
+}
+.standfirst{
+  margin:12px 0 0;
+  max-width:34em;
+  font-size:16px;
+  color:var(--muted);
+}
+.q{
+  margin:22px 0 0;
+  border:2px solid var(--rule-strong);
+  border-radius:12px;
+  background:var(--paper);
+  overflow:hidden;
+}
+.qlead{
+  margin:0;
+  padding:12px 16px 0;
+  font-size:11px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.fields{display:grid;grid-template-columns:1fr}
+.f{padding:4px 16px 14px;position:relative}
+.f + .f{border-top:1px solid var(--rule)}
+.fl{
+  display:block;
+  font-size:13px;
+  color:var(--muted);
+  padding-bottom:2px;
+}
+.fin{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+input[type="date"]{
+  font:inherit;
+  font-size:clamp(20px,5.5vw,28px);
+  font-weight:700;
+  letter-spacing:-.02em;
+  color:var(--ink);
+  background:transparent;
+  border:0;
+  border-bottom:2px solid var(--rule);
+  padding:2px 0;
+  min-width:11ch;
+  max-width:100%;
+}
+input[type="date"]:focus{outline:0;border-bottom-color:var(--signal)}
+.today{
+  font:inherit;
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  background:transparent;
+  border:0;
+  border-bottom:1px solid var(--rule);
+  padding:2px 0;
+  cursor:pointer;
+}
+.today:hover,.today:focus{color:var(--signal);border-bottom-color:var(--signal);outline:0}
+.qnote{
+  margin:14px 0 0;
+  font-size:13px;
+  color:var(--muted);
+  max-width:46em;
+}
+.qnote b{color:var(--ink);font-weight:600}
+
+/* ---------- the ledger ---------- */
+.ledger{margin:34px 0 0;border-top:2px solid var(--rule-strong)}
+.lhead{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:2px;
+  padding:8px 0 10px;
+  font-size:11px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--muted);
+  border-bottom:1px solid var(--rule);
+}
+.lhead .r{text-align:left}
+.row{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:8px;
+  padding:16px 0;
+  border-bottom:1px solid var(--rule);
+  text-decoration:none;
+  color:inherit;
+}
+a.row:hover .nm,a.row:focus .nm{color:var(--signal)}
+a.row:focus{outline:2px solid var(--signal);outline-offset:4px}
+.nm{
+  display:block;
+  font-size:19px;
+  font-weight:600;
+  letter-spacing:-.015em;
+}
+a.row .nm::after{content:" →";color:var(--muted);font-weight:400}
+.sub{
+  display:block;
+  margin-top:3px;
+  font-size:13px;
+  color:var(--muted);
+}
+.rail{display:block}
+.clock{
+  display:block;
+  font-size:10px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.dur{
+  display:block;
+  font-size:17px;
+  font-weight:600;
+  letter-spacing:-.01em;
+}
+.date{
+  display:block;
+  font-size:17px;
+  font-weight:700;
+  letter-spacing:-.015em;
+  color:var(--signal);
+}
+.is-dated .dur{
+  font-size:12px;
+  font-weight:400;
+  color:var(--muted);
+  order:2;
+}
+.foot{
+  margin:26px 0 0;
+  padding:16px 0 40px;
+  border-top:1px solid var(--rule);
+  font-size:12.5px;
+  color:var(--muted);
+  max-width:52em;
+}
+.foot p{margin:0 0 6px}
+.foot a{color:var(--signal)}
+
+@media (min-width:640px){
+  .fields{grid-template-columns:1fr}
+  .lhead,.row{grid-template-columns:1fr 18rem;gap:10px 24px;align-items:start}
+  .lhead .r,.rail{text-align:right}
+  .is-dated .rail{display:flex;flex-direction:column;align-items:flex-end}
+  .is-dated .clock{order:1}
+  .is-dated .date{order:1}
+}
+@media (max-width:639px){
+  .rail{padding-top:2px}
+  .is-dated .rail{display:flex;flex-direction:column}
+  .is-dated .clock{order:0}
+  .is-dated .date{order:1}
+}
+</style>
+</head>
+<body>
+<div class="topbar"></div>
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="brand">KeepsUntil</p>
+    <h1 class="ask">Until when?</h1>
+    <p class="standfirst">Storage times from the USDA FoodKeeper data, answered as a date on your calendar. Say when you stored it and every figure on this page stops being a duration.</p>
+
+    <form class="q" id="q" autocomplete="off">
+      <p class="qlead">One question</p>
+      <div class="fields">
+        <div class="f">
+          <label class="fl" for="d-stored">I stored it on</label>
+          <div class="fin">
+            <input type="date" id="d-stored">
+            <button type="button" class="today" data-for="d-stored">today</button>
+          </div>
+        </div>
+      </div>
+    </form>
+    <p class="qnote">Each row counts from a <b>different event</b> — the day it was bought, the day it was cooked, or the day it was opened. The small line on the right of every row says which one it is counting.</p>
+    <noscript><p class="qnote">The date box needs JavaScript. The storage times below are complete without it.</p></noscript>
+  </header>
+
+  <main class="ledger">
+    <div class="lhead">
+      <span>Food — shortest clock first</span>
+      <span class="r">Keeps until</span>
+    </div>
+
+    <div class="row">
+      <span class="who">
+        <span class="nm">Eggs, raw whites, yolks</span>
+        <span class="sub">Dairy Products &amp; Eggs &middot; frozen 12 months, 90&times; longer</span>
+      </span>
+      <span class="rail" data-min="2" data-max="4">
+        <span class="clock">fridge</span>
+        <span class="dur">2 to 4 days</span>
+        <span class="date" hidden></span>
+      </span>
+    </div>
+
+    <a class="row" href="product.html" data-base="product.html" data-param="o">
+      <span class="who">
+        <span class="nm">Canned chicken</span>
+        <span class="sub">Poultry &middot; sealed in the pantry 5 years &middot; opening it costs &times;456</span>
+      </span>
+      <span class="rail" data-min="3" data-max="4">
+        <span class="clock">from opening, fridge</span>
+        <span class="dur">3 to 4 days</span>
+        <span class="date" hidden></span>
+      </span>
+    </a>
+
+    <div class="row">
+      <span class="who">
+        <span class="nm">Anchovies, canned</span>
+        <span class="sub">Condiments, Sauces &amp; Canned Goods &middot; sealed 5 years &middot; frozen 2 months &middot; opening it costs &times;456</span>
+      </span>
+      <span class="rail" data-min="3" data-max="4">
+        <span class="clock">from opening, fridge</span>
+        <span class="dur">3 to 4 days</span>
+        <span class="date" hidden></span>
+      </span>
+    </div>
+
+    <div class="row">
+      <span class="who">
+        <span class="nm">Milk, canned evaporated or condensed</span>
+        <span class="sub">Shelf Stable Foods &middot; sealed 12 months &middot; opening it costs &times;72</span>
+      </span>
+      <span class="rail" data-min="4" data-max="5">
+        <span class="clock">from opening, fridge</span>
+        <span class="dur">4 to 5 days</span>
+        <span class="date" hidden></span>
+      </span>
+    </div>
+
+    <div class="row">
+      <span class="who">
+        <span class="nm">Quiche</span>
+        <span class="sub">Baked Goods &middot; frozen 2 to 3 months, 18&times; longer &middot; 2 hours at room temperature</span>
+      </span>
+      <span class="rail" data-min="3" data-max="5">
+        <span class="clock">from opening, fridge</span>
+        <span class="dur">3 to 5 days</span>
+        <span class="date" hidden></span>
+      </span>
+    </div>
+
+    <div class="row">
+      <span class="who">
+        <span class="nm">Bacon, uncured</span>
+        <span class="sub">Meat &middot; frozen 3 to 4 weeks, 4&times; longer</span>
+      </span>
+      <span class="rail" data-min="4" data-max="7">
+        <span class="clock">fridge</span>
+        <span class="dur">4 to 7 days</span>
+        <span class="date" hidden></span>
+      </span>
+    </div>
+
+    <div class="row">
+      <span class="who">
+        <span class="nm">Milk, shelf-stable</span>
+        <span class="sub">Shelf Stable Foods &middot; sealed 6 to 12 months &middot; opening it costs &times;51</span>
+      </span>
+      <span class="rail" data-min="5" data-max="7">
+        <span class="clock">from opening, fridge</span>
+        <span class="dur">5 to 7 days</span>
+        <span class="date" hidden></span>
+      </span>
+    </div>
+
+    <div class="row">
+      <span class="who">
+        <span class="nm">Bacon</span>
+        <span class="sub">Meat &middot; frozen 1 month, 4.3&times; longer &middot; opened, 1 week</span>
+      </span>
+      <span class="rail" data-min="7" data-max="7">
+        <span class="clock">from purchase, fridge</span>
+        <span class="dur">1 week</span>
+        <span class="date" hidden></span>
+      </span>
+    </div>
+
+    <div class="row">
+      <span class="who">
+        <span class="nm">Eggs, hard boiled cooked</span>
+        <span class="sub">Dairy Products &amp; Eggs &middot; freezing not recommended</span>
+      </span>
+      <span class="rail" data-min="7" data-max="7">
+        <span class="clock">fridge</span>
+        <span class="dur">1 week</span>
+        <span class="date" hidden></span>
+      </span>
+    </div>
+
+    <div class="row">
+      <span class="who">
+        <span class="nm">Milk, lactose-free</span>
+        <span class="sub">Dairy Products &amp; Eggs &middot; freezing not recommended</span>
+      </span>
+      <span class="rail" data-min="7" data-max="7">
+        <span class="clock">from opening, fridge</span>
+        <span class="dur">1 week</span>
+        <span class="date" hidden></span>
+      </span>
+    </div>
+
+    <div class="row">
+      <span class="who">
+        <span class="nm">Milk, ultra-pasteurized</span>
+        <span class="sub">Shelf Stable Foods &middot; unopened in the fridge 1 to 3 months &middot; opening it costs &times;9</span>
+      </span>
+      <span class="rail" data-min="7" data-max="10">
+        <span class="clock">from opening, fridge</span>
+        <span class="dur">7 to 10 days</span>
+        <span class="date" hidden></span>
+      </span>
+    </div>
+
+    <div class="row">
+      <span class="who">
+        <span class="nm">Bacon, fully cooked</span>
+        <span class="sub">Meat &middot; sealed in the pantry 6 months &middot; opening it costs &times;13</span>
+      </span>
+      <span class="rail" data-min="5" data-max="14">
+        <span class="clock">from opening, fridge</span>
+        <span class="dur">5 to 14 days</span>
+        <span class="date" hidden></span>
+      </span>
+    </div>
+
+    <div class="row">
+      <span class="who">
+        <span class="nm">Eggs, in shell</span>
+        <span class="sub">Dairy Products &amp; Eggs &middot; freezing in the shell not recommended</span>
+      </span>
+      <span class="rail" data-min="21" data-max="35">
+        <span class="clock">from purchase, fridge</span>
+        <span class="dur">3 to 5 weeks</span>
+        <span class="date" hidden></span>
+      </span>
+    </div>
+
+    <div class="row">
+      <span class="who">
+        <span class="nm">Butter</span>
+        <span class="sub">Dairy Products &amp; Eggs &middot; frozen 6 to 9 months, 4.5&times; longer</span>
+      </span>
+      <span class="rail" data-min="30" data-max="60">
+        <span class="clock">from purchase, fridge</span>
+        <span class="dur">1 to 2 months</span>
+        <span class="date" hidden></span>
+      </span>
+    </div>
+
+    <div class="row">
+      <span class="who">
+        <span class="nm">Milk, plain or flavored</span>
+        <span class="sub">Dairy Products &amp; Eggs &middot; FoodKeeper gives this one a freezer time only</span>
+      </span>
+      <span class="rail" data-min="90" data-max="90">
+        <span class="clock">from purchase, freezer</span>
+        <span class="dur">3 months</span>
+        <span class="date" hidden></span>
+      </span>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p>Times are from the public USDA FoodKeeper data. The dates are computed here, day by day, from the date you gave; they are quality dates, not a safety guarantee.</p>
+    <p>Design prototype: only <a href="product.html">Canned chicken</a> has a product page.</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var DAY = 86400000;
+
+  function parseDate(value){
+    if(!value){ return null; }
+    var parts = value.split("-");
+    if(parts.length !== 3){ return null; }
+    var y = parseInt(parts[0], 10);
+    var m = parseInt(parts[1], 10);
+    var d = parseInt(parts[2], 10);
+    if(!y || !m || !d){ return null; }
+    return Date.UTC(y, m - 1, d);
+  }
+
+  function shift(stamp, days){
+    return stamp + Math.round(days) * DAY;
+  }
+
+  function one(stamp){
+    var dt = new Date(stamp);
+    return MON[dt.getUTCMonth()] + " " + dt.getUTCDate() + ", " + dt.getUTCFullYear();
+  }
+
+  function span(a, b){
+    if(a === b){ return one(a); }
+    var da = new Date(a);
+    var db = new Date(b);
+    if(da.getUTCFullYear() === db.getUTCFullYear()){
+      if(da.getUTCMonth() === db.getUTCMonth()){
+        return MON[da.getUTCMonth()] + " " + da.getUTCDate() + " to " + db.getUTCDate() + ", " + db.getUTCFullYear();
+      }
+      return MON[da.getUTCMonth()] + " " + da.getUTCDate() + " to " + MON[db.getUTCMonth()] + " " + db.getUTCDate() + ", " + db.getUTCFullYear();
+    }
+    return one(a) + " to " + one(b);
+  }
+
+  function todayValue(){
+    var now = new Date();
+    var m = now.getMonth() + 1;
+    var d = now.getDate();
+    var mm = m < 10 ? "0" + m : "" + m;
+    var dd = d < 10 ? "0" + d : "" + d;
+    return now.getFullYear() + "-" + mm + "-" + dd;
+  }
+
+  var field = document.getElementById("d-stored");
+  var rows = document.querySelectorAll(".row");
+  var links = document.querySelectorAll("a.row[data-base]");
+
+  function render(){
+    var stamp = parseDate(field.value);
+    var i;
+    for(i = 0; i < rows.length; i++){
+      var row = rows[i];
+      var rail = row.querySelector(".rail");
+      var out = rail.querySelector(".date");
+      if(stamp === null){
+        out.textContent = "";
+        out.hidden = true;
+        row.classList.remove("is-dated");
+      } else {
+        var lo = shift(stamp, parseFloat(rail.getAttribute("data-min")));
+        var hi = shift(stamp, parseFloat(rail.getAttribute("data-max")));
+        out.textContent = span(lo, hi);
+        out.hidden = false;
+        row.classList.add("is-dated");
+      }
+    }
+    for(i = 0; i < links.length; i++){
+      var link = links[i];
+      var base = link.getAttribute("data-base");
+      if(stamp === null){
+        link.setAttribute("href", base);
+      } else {
+        link.setAttribute("href", base + "?" + link.getAttribute("data-param") + "=" + field.value);
+      }
+    }
+  }
+
+  field.addEventListener("input", render);
+  field.addEventListener("change", render);
+
+  var buttons = document.querySelectorAll(".today");
+  for(var b = 0; b < buttons.length; b++){
+    buttons[b].addEventListener("click", function(ev){
+      var target = document.getElementById(ev.currentTarget.getAttribute("data-for"));
+      target.value = todayValue();
+      render();
+    });
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
