@@ -113,6 +113,11 @@ def _resource_origins():
     import render as rd
     own = ("https://%s" % DOMAIN_HINT[0],)
     extra = tuple(rd.AD_ORIGINS[rd.AD_NETWORK]) if rd.AD_NETWORK else ()
+    # Счётчик — ВТОРОЙ и пока единственный законный выход наружу. Оригин
+    # берётся из объявления генератора, а не набирается здесь: список,
+    # переписанный руками, разошёлся бы с политикой молча.
+    if rd.ANALYTICS:
+        extra += (rd.ANALYTICS_ORIGIN,)
     return tuple(o.lower() for o in own + extra)
 
 
@@ -895,9 +900,11 @@ def g_scripts(files):
     bad = []
     # Загрузчик сети и толчок к нему — ДВА разрешённых исполняемых скрипта
     # сверх собственного, и только когда сеть объявлена включённой.
-    limit = 1 + (2 if rd.AD_NETWORK else 0)
+    limit = 1 + (2 if rd.AD_NETWORK else 0) + (2 if rd.ANALYTICS else 0)
     seen = 0
     src_ok = tuple(rd.AD_ORIGINS[rd.AD_NETWORK]) if rd.AD_NETWORK else ()
+    if rd.ANALYTICS:
+        src_ok += (rd.ANALYTICS_SRC,)
     for p, t in _html(files).items():
         tags = re.findall(r"<script([^>]*)>(.*?)</script>", t, re.S)
         data = [x for x in tags if _is_data(x[0])]
@@ -915,6 +922,24 @@ def g_scripts(files):
         for attrs, _body in data:
             if "src" in _tag_attrs(attrs):
                 bad.append("%s: блок данных со ссылкой" % p)
+        # СЧЁТЧИК ПУЩЕН ПО ТОЖДЕСТВУ, А НЕ ПО СЧЁТУ. Предел поднят, но
+        # поднятый предел сам по себе впустил бы ЛЮБЫЕ три скрипта, поэтому
+        # рядом стоит равенство: ровно один загрузчик с объявленным адресом
+        # и ровно одно объявление согласия, слово в слово таким, каким его
+        # печатает генератор. Подменённое согласие — например разрешающее
+        # рекламные хранилища — покраснеет здесь, а не уедет на площадку.
+        if rd.ANALYTICS:
+            boot = rd.analytics_boot()
+            n_load = len([1 for a, b in code
+                          if _tag_attrs(a).get("src") == rd.ANALYTICS_SRC
+                          and not b.strip()])
+            n_boot = len([1 for _a, b in code if b == boot])
+            if n_load != 1:
+                bad.append("%s: загрузчиков счётчика %d, а объявлен один"
+                           % (p, n_load))
+            if n_boot != 1:
+                bad.append("%s: объявлений согласия %d, а объявлено одно"
+                           % (p, n_boot))
         for attrs, body in code:
             s = _tag_attrs(attrs).get("src")
             if s is not None and not (src_ok and s.startswith(src_ok)):
@@ -2376,6 +2401,12 @@ def _inline_hashes(t, tag):
     for a, body in re.findall(r"<%s([^>]*)>(.*?)</%s>" % (tag, tag), t, re.S):
         if tag == "script" and _is_data(a):
             continue
+        # ВНЕШНИЙ скрипт хэшировать НЕЧЕГО: тело у него пустое, а исполняет
+        # браузер файл по адресу. Посчитать хэш пустой строки и положить его
+        # в политику значило бы обещать браузеру кусок, которого нет, — и
+        # список хэшей разошёлся бы с собранной страницей на каждой из 327.
+        if tag == "script" and "src" in _tag_attrs(a):
+            continue
         out.append("'sha256-%s'" % base64.b64encode(
             hashlib.sha256(body.encode("utf-8")).digest()).decode("ascii"))
     return out
@@ -2551,6 +2582,19 @@ def g_privacy_matches_markup(files):
     if denies_third and ext_src:
         bad.append("политика отрицает внешние скрипты, а их %d"
                    % len(ext_src))
+    # ЧУЖОЙ ХОСТ ЛОВИТСЯ И БЕЗ ОТРИЦАНИЯ. Пока страница отрицала стороннее,
+    # любая чужая загрузка падала на строку выше. Со счётчиком отрицания
+    # больше нет — и вместе с ним исчезла бы вся эта половина проверки:
+    # счётчик, приехавший картинкой или вторым скриптом, не покраснел бы
+    # нигде. Самопроверка это и показала: две поломки перестали срабатывать
+    # в тот же день. Правило теперь прямое: ЛЮБОЙ внешний адрес обязан быть
+    # тем, который объявлен, — а не «не запрещён».
+    if rd.ANALYTICS:
+        declared_src = rd.ANALYTICS_SRC.split("?")[0]
+        for s in sorted(ext_src):
+            if s != declared_src:
+                bad.append("внешний скрипт %s, а объявлен только %s"
+                           % (s[:44], declared_src))
     # СТОРОНА ТРЕТЬЯ, и она была дырой размером с обещание. Здесь читался
     # ровно `<script src>` — одна несущая из двадцати девяти. Счётчик,
     # приехавший картинкой, пикселем в `srcset`, `@import`-ом или `fetch()`
@@ -2570,6 +2614,13 @@ def g_privacy_matches_markup(files):
     if denies_third and outside:
         bad.append("политика отрицает внешние загрузки, а их %d, первая — %s"
                    % (len(outside), sorted(outside)[0]))
+    elif outside:
+        # То же самое для НЕ-скриптовых несущих: картинка, шрифт, @import,
+        # fetch на ходу. `_resource_origins` уже пускает оригин счётчика,
+        # значит всё, что осталось в `outside`, не объявлено никем.
+        bad.append("наружу уходит %d загрузок, не названных ни в политике, "
+                   "ни в объявлении счётчика, первая — %s"
+                   % (len(outside), sorted(outside)[0]))
     # Число несущих ПЕЧАТАЕТСЯ страницей из того же объявления, по которому
     # сканирует гейт, и здесь сверяется с ним. Иначе абзац «проверено
     # столько-то способов» переживёт удаление половины списка и станет ровно
@@ -2587,9 +2638,16 @@ def g_privacy_matches_markup(files):
     if denies_ads and slots:
         bad.append("политика отрицает рекламу, а мест %d" % slots)
     # Сторона вторая: разметка против политики.
-    if analytics and not re.search(r"analytics service|counts page views",
-                                   vis):
-        bad.append("аналитика в разметке не названа в политике")
+    # НАЗВАНА — значит названа ИМЕНЕМ. «Сторонняя служба» в правовом
+    # документе не называет никого, а прежняя проверка принимала любое
+    # «analytics service». Имя берётся у генератора, а не набирается здесь.
+    if analytics and rd.ANALYTICS_NAME not in vis:
+        bad.append("счётчик в разметке есть, а политика не называет его: в "
+                   "тексте нет «%s»" % rd.ANALYTICS_NAME)
+    if analytics and not rd.COOKIES:
+        bad.append("счётчик в разметке есть, а флаг кук выключен: _ga ставит "
+                   "УДАЛЁННЫЙ файл, и ни один разбор встроенного кода этого "
+                   "не увидит")
     if storage and "Cookies are used" not in vis:
         bad.append("хранилище в разметке не названо в политике")
     if ext_src and not analytics and not rd.AD_NETWORK:
@@ -2600,10 +2658,10 @@ def g_privacy_matches_markup(files):
     # флаг ANALYTICS переписывает эту страницу и НЕ ставит ни одного скрипта,
     # то есть сам по себе он рычаг, которого не существует. Пусть сборка
     # краснеет на том, кто его дёрнул, а не читатель на обещании.
-    if not analytics and "analytics service" in vis:
-        bad.append("политика обещает аналитику, которой в разметке нет")
-    if not storage and "Cookies are used only where you have agreed" in vis:
-        bad.append("политика обещает куки, которых в разметке нет")
+    if not analytics and rd.ANALYTICS_NAME in vis:
+        bad.append("политика называет счётчик, которого в разметке нет")
+    if not rd.ANALYTICS and rd.COOKIES:
+        bad.append("флаг кук включён без счётчика: ставить их больше нечему")
     if rd.AD_NETWORK:
         if rd.AD_NETWORK not in vis:
             bad.append("сеть включена, а политика её не называет")
@@ -2611,7 +2669,7 @@ def g_privacy_matches_markup(files):
             bad.append("сеть включена, а её адрес в политике не назван")
         if denies_third:
             bad.append("сеть включена, а политика отрицает внешние скрипты")
-    elif slots and not denies_third:
+    elif slots and not denies_third and not analytics:
         bad.append("сети нет и внешних скриптов нет, а политика этого не "
                    "говорит")
     # ОБЕ СТОРОНЫ ОДНИМ ПРАВИЛОМ, и обе — из одного объявления. Обещание,
@@ -2619,9 +2677,15 @@ def g_privacy_matches_markup(files):
     # держит, а страница уже не печатает, — выключенная проверка, и это
     # ровно тот случай, когда гейт зеленеет от того, что смотреть стало не
     # на что.
+    # КУКИ СЧЁТЧИКА СТАВИТ УДАЛЁННЫЙ ФАЙЛ. `storage` находит только
+    # `document.cookie` и хранилища во ВСТРОЕННОМ коде, а `_ga` приходит из
+    # gtag.js, которого в наших байтах нет вовсе. Оставь здесь один
+    # `not storage` — и «sets no cookies» осталось бы напечатанным и ложным
+    # при всех зелёных гейтах. Это ровно та дыра, из-за которой утверждение
+    # о приватности обязано выводиться из ФЛАГА, а не из находки в коде.
     truth = {
         "analytics": not analytics,
-        "cookies": not storage,
+        "cookies": not storage and not rd.ANALYTICS,
         "third": not ext_src and not outside,
         "ads": not slots,
         "one_request": not analytics and not ext_src and not outside,
@@ -6259,9 +6323,22 @@ def pure_selftest():
     eq("хэш: блок данных в политику не идёт",
        _inline_hashes('<script type="application/json">{}</script>',
                       "script"), [])
-    eq("политика: без скрипта директива становится 'none'",
-       [d for d in rd.csp_value("", "").split("; ")
-        if d.startswith("script-src")], ["script-src 'none'"])
+    # Известный ответ переписан вместе с политикой: у script-src появился
+    # ПОСТОЯННЫЙ источник — хост счётчика, — и «пусто значит none» теперь
+    # верно только для директив без постоянных источников. Проверяются обе
+    # половины правила, иначе оно доказано наполовину.
+    eq("политика: без встроенного куска остаются постоянные источники",
+       [d for d in rd.csp_value((), "").split("; ")
+        if d.startswith("script-src")],
+       ["script-src " + rd.ANALYTICS_ORIGIN] if rd.ANALYTICS
+       else ["script-src 'none'"])
+    eq("политика: директива без постоянных источников и без куска — 'none'",
+       [d for d in rd.csp_value((), "").split("; ")
+        if d.startswith("style-src")], ["style-src 'none'"])
+    eq("политика: два встроенных куска дают два хэша В ПОРЯДКЕ СТРАНИЦЫ",
+       [d for d in rd.csp_value(("a", "b"), "").split("; ")
+        if d.startswith("style-src") or d.startswith("script-src")][0]
+       .endswith("%s %s" % (rd._csp_hash("a"), rd._csp_hash("b"))), True)
 
     # ОБЛАСТЬ. Файл, который никто не разбирает, выглядит ровно как чистый.
     eq("область: файл стиля читается как стиль",
@@ -6936,9 +7013,14 @@ def selftest():
              "<url><loc>https://keepsuntil.com/ghost/</loc></url></urlset>"))),
         ("robots указывает карту",
          lambda c: c.__setitem__("robots.txt", "User-agent: *\nAllow: /\n")),
+        # ПОЛОМКА ПЕРЕВЁРНУТА В ДЕНЬ ПОДКЛЮЧЕНИЯ СЧЁТЧИКА. Она вставляла
+        # gtag на страницу и требовала красноты — но со ЗАКОННЫМ счётчиком
+        # это больше не дефект, и гейт остался бы зелёным, то есть проба
+        # перестала бы что-либо доказывать. Ломается другая сторона:
+        # политика перестаёт называть счётчик, который сайт несёт.
         ("политика совпадает с разметкой",
-         lambda c: c.__setitem__(any_page, c[any_page].replace(
-             "</body>", "<script>gtag('config','X')</script></body>"))),
+         lambda c: c.__setitem__(legal_page, c[legal_page].replace(
+             "Google Analytics 4", "a counter"))),
         ("ответ первым в каждом разделе",
          lambda c: c.__setitem__(any_page, re.sub(
              r"<h2>(.*?)</h2>\s*<p([^>]*)>.*?</p>",
@@ -7430,18 +7512,23 @@ def selftest():
         ("политика совпадает с разметкой",
          lambda c: c.__setitem__(legal_page, c[legal_page].replace(
              "</body>", "<p>This site carries no advertising.</p></body>"))),
+        # ТРИ ОТРИЦАНИЯ, КОТОРЫХ НА СТРАНИЦЕ БОЛЬШЕ НЕТ. Раньше они
+        # ломались подменой напечатанного; со счётчиком печатается уже
+        # другое, и подменять стало нечего — ломка молча промахивалась.
+        # Теперь отрицание ВСТАВЛЯЕТСЯ: обещание, которого сборка не
+        # держит, обязано ронять сборку.
         ("политика совпадает с разметкой",
          lambda c: c.__setitem__(legal_page, c[legal_page].replace(
-             "No third-party script loads on any page",
-             "Some scripts may load"))),
+             "</body>", "<p>No third-party script loads on any page.</p>"
+             "</body>"))),
         ("политика совпадает с разметкой",
          lambda c: c.__setitem__(legal_page, c[legal_page].replace(
-             "</body>", "<p>This site uses a privacy-focused analytics "
-             "service to count page views.</p></body>"))),
+             "</body>", "<p>This site runs no analytics of any kind.</p>"
+             "</body>"))),
         ("политика совпадает с разметкой",
          lambda c: c.__setitem__(legal_page, c[legal_page].replace(
-             "</body>", "<p>Cookies are used only where you have agreed to "
-             "them.</p></body>"))),
+             "</body>", "<p>This site sets no cookies and uses no local "
+             "storage.</p></body>"))),
         # --- рекламные места: пропало, опустело, приехало не туда, и пусто
         ("рекламные места стоят по объявлению",
          lambda c: c.__setitem__(prod_page, re.sub(
@@ -8241,12 +8328,19 @@ def selftest():
     def _break_policy_claim_gone(c):
         """Страница перестала печатать обещание, которое сборка держит.
         Прежний гейт читал это как «отрицать нечего» и зеленел: сторона
-        «политика → разметка» была тремя литералами, вписанными в гейт."""
+        «политика → разметка» была тремя литералами, вписанными в гейт.
+
+        ЛОМАЕТСЯ ОБЕЩАНИЕ О ПОЛИТИКЕ, а не об отсутствии стороннего:
+        со счётчиком отрицание стороннего сборка больше не держит, и
+        подменять на странице стало нечего — поломка промахивалась
+        молча. Обещание берётся из объявления, а не набирается здесь,
+        поэтому следующая перестановка слов поломку не обманет."""
         pv = "privacy/index.html"
-        want = "No third-party script loads on any page"
+        import render as rd
+        want = dict((k, p) for k, p, _h in rd.PRIVACY_CLAIMS)["policy"]
         assert want in c[pv], "поломка промахнулась мимо обещания"
         c[pv] = c[pv].replace(
-            want, "Third-party scripts are kept to a minimum", 1)
+            want, "is built with care", 1)
 
     def _break_policy_csp_gone(c):
         """Политика безопасности исчезла со всех страниц, а страница

@@ -73,11 +73,64 @@ DATA_VINTAGE = "USDA FoodKeeper, retrieved 1 September 2026"
 # Дата СОДЕРЖИМОГО, не сборки. Двигать руками вместе с текстом.
 CONTENT_DATE = date(2026, 9, 16)
 
-# Ни счётчика, ни кук. Флаг читают разметка, текст политики и гейт — втроём
-# они разойтись не могут. У студийного сайта политика уверяла, что аналитики
-# нет, пока хостинг подставлял счётчик на каждую страницу.
-ANALYTICS = False
-COOKIES = False
+# Счётчик и куки. Флаг читают разметка, текст политики и гейт — втроём они
+# разойтись не могут. У студийного сайта политика уверяла, что аналитики нет,
+# пока хостинг подставлял счётчик на каждую страницу.
+ANALYTICS = True
+COOKIES = True
+
+# ИДЕНТИФИКАТОР РЕСУРСА GA4. Не секрет: он стоит в отданной разметке и сам по
+# себе не открывает ни одного отчёта — доступ даёт роль в самом GA4.
+ANALYTICS_ID = "G-SY0GWQKNJW"
+# ИМЯ ПРОДУКТА. Оно печатается в политике и ЕГО ЖЕ требует гейт: «сторонняя
+# служба» в правовом документе не называет никого, а «Google Analytics» без
+# четвёрки называет другой продукт — прежний Universal Analytics выключен.
+ANALYTICS_NAME = "Google Analytics 4"
+
+# Откуда грузится файл счётчика — и куда он потом стучится. Два РАЗНЫХ
+# списка: первый идёт в script-src, второй — в connect-src и img-src.
+#
+# Подстановочный знак в приёмниках не лень: gtag.js выбирает РЕГИОНАЛЬНЫЙ
+# приёмник во время работы (region1.google-analytics.com и так далее), и
+# политика, назвавшая только www.google-analytics.com, даёт загруженный,
+# исполняющийся, согласие уважающий счётчик, который не отправляет НИЧЕГО.
+# Сборка при этом зелёная, отданные байты совпадают с собранными — ровно тот
+# отказ, который на этой ферме случался уже дважды.
+ANALYTICS_ORIGIN = "https://www.googletagmanager.com"
+ANALYTICS_COLLECT = ("https://*.google-analytics.com",
+                     "https://*.analytics.google.com")
+ANALYTICS_SRC = "%s/gtag/js?id=%s" % (ANALYTICS_ORIGIN, ANALYTICS_ID)
+
+# Страны, где аналитическое хранилище запрещено ПО УМОЛЧАНИЮ: ЕЭЗ целиком
+# плюс Великобритания и Швейцария. Рекламные хранилища запрещены везде.
+ANALYTICS_STRICT = ("AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI",
+                    "FR", "DE", "GR", "HU", "IE", "IT", "LV", "LT", "LU",
+                    "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE",
+                    "IS", "LI", "NO", "GB", "CH")
+
+
+def analytics_boot():
+    """Объявление согласия и запуск счётчика — одной строкой.
+
+    Порядок обязателен и необратим по смыслу: общее объявление первым,
+    региональное вторым. Второе перекрывает первое для названных стран;
+    поменяй их местами — запрет в ЕЭЗ перестанет действовать МОЛЧА.
+
+    Блок стоит в <head> вплотную к загрузчику, а не в конце страницы рядом
+    с поиском: загрузчик помечен async и вправе исполниться в любой момент
+    после докачки, а объявление обязано отработать ДО первой измерительной
+    команды.
+    """
+    reg = ",".join("'%s'" % c for c in ANALYTICS_STRICT)
+    deny = ("'ad_storage':'denied','ad_user_data':'denied',"
+            "'ad_personalization':'denied'")
+    return ("window.dataLayer=window.dataLayer||[];"
+            "function gtag(){dataLayer.push(arguments);}"
+            "gtag('consent','default',{%s,'analytics_storage':'granted'});"
+            "gtag('consent','default',{%s,'analytics_storage':'denied',"
+            "'region':[%s]});"
+            "gtag('js',new Date());gtag('config','%s');"
+            % (deny, deny, reg, ANALYTICS_ID))
 
 # Реклама ЕСТЬ. Сайт живёт с показов, а «места нет вовсе» — это не
 # осторожность, а отсутствующая выручка при выключенных гейтах: два гейта
@@ -293,14 +346,25 @@ CSP_POLICY = (
     ("form-action", ("'none'",), None,
      "куда уходит отправка формы. Тоже не откатывается на default-src; "
      "форм на сайте нет ни одной, и разрешать нечего"),
-    ("script-src", (), "script",
-     "ровно те встроенные скрипты, которые собрала сборка, по хэшу"),
+    ("script-src", (ANALYTICS_ORIGIN,) if ANALYTICS else (), "script",
+     "ровно те встроенные скрипты, которые собрала сборка, по хэшу, плюс "
+     "ОДИН внешний хост — тот, с которого грузится файл счётчика. Хост "
+     "назван целиком и без подстановочного знака: он пускает gtag.js и "
+     "ничего другого"),
     ("style-src", (), "style",
      "тот же счёт для встроенного стиля"),
-    ("img-src", ("data:",), None,
+    ("img-src", ("data:",) + ((ANALYTICS_COLLECT[0],) if ANALYTICS else ()),
+     None,
      "единственная картинка страницы — иконка, нарисованная в самой "
      "странице; своего оригина здесь нет, потому что ни одного <img> сайт "
-     "не несёт"),
+     "не несёт. Приёмник счётчика назван здесь потому, что при недоступном "
+     "sendBeacon gtag.js отправляет измерение картинкой"),
+    ("connect-src", ANALYTICS_COLLECT if ANALYTICS else (), None,
+     "куда счётчику позволено ОТПРАВИТЬ измеренное. Директива заведена "
+     "вместе со счётчиком и до него отсутствовала: без неё запрос падал бы "
+     "на default-src 'none'. Забыть её — значит получить загруженный, "
+     "исполняющийся, согласие уважающий счётчик, который не отправляет "
+     "ничего, при зелёной сборке и совпадающих байтах"),
 )
 
 # Чего политика в <meta> НЕ МОЖЕТ, и это записано, а не подразумевается:
@@ -362,9 +426,11 @@ CSP_GOVERNS = {
     "css_import": ("style-src", "@import тянет ещё один лист стиля"),
     "importmap": ("script-src", "по назначенным адресам уйдёт import, а "
                   "хэш чужой модуль не пустит"),
-    "js_fetch": ("default-src", "connect-src и worker-src откатываются "
-                 "сюда; но УХОД СТРАНИЦЫ ЦЕЛИКОМ политика не держит, и "
-                 "держит его сканер"),
+    "js_fetch": ("connect-src", "с появлением счётчика connect-src "
+                 "объявлена СВОЕЙ строкой и больше не откатывается на "
+                 "default-src: fetch и XHR держит она, worker-src "
+                 "по-прежнему падает на default-src 'none'. Но УХОД "
+                 "СТРАНИЦЫ ЦЕЛИКОМ политика не держит, и держит его сканер"),
     "on_event": ("script-src", "обработчик — встроенный скрипт, а хэш на "
                  "атрибут не распространяется: без 'unsafe-hashes' он "
                  "просто не выполнится"),
@@ -384,17 +450,22 @@ def _csp_hash(text):
         hashlib.sha256(text.encode("utf-8")).digest()).decode("ascii")
 
 
-def csp_value(script, style):
+def csp_value(scripts, style):
     """Политика ОДНОЙ страницы: объявление плюс хэши её собственных кусков.
 
     Пусто — значит 'none': директива без единого источника недействительна,
     и браузер выбросил бы её вместе с защитой.
+
+    `scripts` — НАБОР встроенных кусков В ПОРЯДКЕ СТРАНИЦЫ, а не один кусок.
+    Их стало два: объявление согласия в <head> и поиск с календарём в конце.
+    Порядок здесь не косметика — гейт читает хэши из СОБРАННОЙ страницы
+    сверху вниз и сверяет списком, поэтому перестановка покраснеет.
     """
     parts = []
     for name, fixed, take, _why in CSP_POLICY:
         src = list(fixed)
-        if take == "script" and script:
-            src.append(_csp_hash(script))
+        if take == "script":
+            src += [_csp_hash(s) for s in scripts if s]
         elif take == "style" and style:
             src.append(_csp_hash(style))
         parts.append(" ".join([name] + (src or ["'none'"])))
@@ -890,12 +961,20 @@ def shell(path, title, desc, body, index=True, script="", ptype="page",
     # скрипт», написанное затем, чтобы страница не обрастала кодом незаметно.
     code = FINDER_JS + (script or "")
     sc = "<script>%s</script>" % code
+    # СЧЁТЧИК СТОИТ В ГОЛОВЕ, и в ней — ниже политики: всё, что напечатано
+    # ВЫШЕ <meta http-equiv>, политикой не закрыто. Загрузчик и объявление
+    # согласия идут вплотную друг за другом: загрузчик помечен async и
+    # вправе исполниться в любой момент после докачки, а согласие обязано
+    # отработать ДО первой измерительной команды.
+    boot = analytics_boot() if ANALYTICS else ""
+    ga = ('<script async src="%s"></script><script>%s</script>'
+          % (ANALYTICS_SRC, boot)) if ANALYTICS else ""
     # Политика собирается ИЗ ЭТОЙ ЖЕ страницы: хэш считается от того самого
     # текста, который уходит в тег. Стоит она сразу за кодировкой — раньше
     # стиля, схемы и иконки: то, что напечатано ВЫШЕ политики, ею не
     # закрыто, и это не мелочь порядка, а вся разница.
     csp = ('<meta http-equiv="Content-Security-Policy" content="%s">'
-           % csp_value(code, CSS))
+           % csp_value((boot, code), CSS))
     # Поиск и навигация стоят ПЕРВЫМИ в корешке — сразу под ответом. На
     # главной поле поиска и есть ответ, и второе такое же было бы петлёй.
     nav = "" if path == "/" else find_box(path,
@@ -934,7 +1013,7 @@ def shell(path, title, desc, body, index=True, script="", ptype="page",
 <meta name="page-type" content="%(ptype)s">
 <link rel="canonical" href="https://%(domain)s%(path)s">
 <link rel="icon" href="data:image/svg+xml,%(icon)s">
-%(og)s%(ld)s<style>%(css)s</style>
+%(og)s%(ld)s%(ga)s<style>%(css)s</style>
 </head>
 <body>
 <a class="skip" href="#stub">Skip to the notes</a>
@@ -950,7 +1029,7 @@ def shell(path, title, desc, body, index=True, script="", ptype="page",
        "perf": perf_row(ptype), "foot": foot_row(path), "band": band,
        "rail": rail,
        "og": og_tags(path, title, desc), "ld": ld_block(schema),
-       "loader": ad_loader(len(slots)),
+       "loader": ad_loader(len(slots)), "ga": ga,
        "robots": robots, "sc": sc, "ptype": ptype, "csp": csp}
 
 
@@ -2259,11 +2338,27 @@ def home(accepted, cat_hubs, ctx):
 def legal_pages():
     """Политика ВЫВОДИТСЯ из флагов, а не пишется руками: утверждение о
     приватности касается того, что грузит браузер, а не того, что мы написали."""
+    # ЭТА ВЕТКА БЫЛА ЛОЖНОЙ ЕЩЁ ДО ТОГО, КАК ЕЁ ВКЛЮЧИЛИ. Написанная
+    # заранее, она описывала счётчик класса Plausible: «никогда не ставит
+    # опознаватель, который ходит за вами между сайтами». Для Google
+    # Analytics 4 это неправда. Рычаг, заготовленный впрок, отгрузил бы
+    # ложное утверждение в правовом документе при всех зелёных гейтах.
     if ANALYTICS:
-        an = ("<p>This site uses a privacy-focused analytics service to count "
-              "page views. It records the page address, the referring site and "
-              "a coarse country, and never sets an identifier that follows you "
-              "between sites.</p>")
+        an = ("<p>This site counts page views with %s, a Google product. The "
+              "file that does the counting is fetched from %s, and what it "
+              "records goes to Google: the address of the page, the site that "
+              "sent you here, an approximate location no finer than a city, "
+              "and the kind of browser and device you are using. It is not "
+              "told your name or your email, and nothing you type into the "
+              "search box on this site is sent to it.</p>"
+              "<p>Advertising storage, advertising user data and advertising "
+              "personalization are refused on every page and in every "
+              "country, so nothing measured here feeds advertising "
+              "profiling. In the European Economic Area, the United Kingdom "
+              "and Switzerland the analytics storage is refused as well, by "
+              "default and without asking: those visits are counted without "
+              "writing anything to your device.</p>"
+              % (esc(ANALYTICS_NAME), esc(ANALYTICS_ORIGIN[8:])))
     else:
         an = ("<p>This site runs no analytics of any kind. No page view is "
               "counted and no visitor is identified. There are two small "
@@ -2271,7 +2366,18 @@ def legal_pages():
               "page and the date calculator on food pages. Both are written "
               "into the page itself, run entirely in your browser, and send "
               "nothing anywhere.</p>")
-    ck = ("<p>Cookies are used only where you have agreed to them.</p>"
+    # КУКИ СЧЁТЧИКА СТАВИТ УДАЛЁННЫЙ ФАЙЛ, и ни один разбор встроенного
+    # кода их не увидит: «sets no cookies» осталось бы напечатанным и ложным
+    # при всех зелёных гейтах. Поэтому обещание привязано к ФЛАГУ счётчика,
+    # а не к находке в коде страницы.
+    ck = ("<p>Outside the European Economic Area, the United Kingdom and "
+          "Switzerland the counter writes cookies of its own, named "
+          "<code>_ga</code> and <code>_ga_</code> followed by the property "
+          "identifier. They tell one browser from another, so a second page "
+          "in the same visit is not counted as a second visitor, and they "
+          "expire two years after your last visit. Inside those countries "
+          "neither is written. Nothing else here sets a cookie, and no "
+          "local storage is used.</p>"
           if COOKIES else
           "<p>This site sets no cookies and uses no local storage.</p>")
 
@@ -2325,27 +2431,45 @@ def legal_pages():
              "not publish. Open the network panel in your browser and you "
              "will see one request &mdash; the page "
              "itself.</p>") if not (AD_NETWORK or ANALYTICS) else (
-        "<p>The scripts listed above are the only ones that load from "
-        "anywhere but this site. " + ways + " Everything it finds points "
-        "either at this site or at an address named on this page.</p>")
+        "<p>The counter named under Analytics is the only thing a page "
+        "loads from anywhere but this site. " + ways + " Everything it "
+        "finds points either at this site or at an address named on "
+        "this page.</p>")
 
     # Обещание о политике печатается ВСЕГДА и из того же объявления, по
     # которому она собирается. Скан доказывает, что наружу не уходит НАШ
     # файл; политика — единственное, что говорит браузеру, когда файл уже
     # не наш: хост дописывает скрипты в чужие страницы, и эта ферма такое
     # уже видела.
+    # СПИСОК ВПУЩЕННЫХ ХОСТОВ ПЕЧАТАЕТСЯ ИЗ САМОЙ ПОЛИТИКИ. Прежняя
+    # редакция утверждала, что политика «forbids everything else outright —
+    # every image, font, frame, connection and script from anywhere at
+    # all», и это перестало быть правдой ровно в тот день, когда в
+    # script-src появился хост счётчика. Утверждение о политике обязано
+    # выводиться из политики, иначе оно живёт своей жизнью.
+    allowed = sorted({s for _n, fixed, _tk, _w in CSP_POLICY
+                      for s in fixed if s.startswith("https://")})
+    if allowed:
+        else_part = ("and allows exactly %d outside address%s &mdash; %s "
+                     "&mdash; and nothing else at all"
+                     % (len(allowed), "" if len(allowed) == 1 else "es",
+                        ", ".join(esc(a[8:]) for a in allowed)))
+    else:
+        else_part = ("and forbids everything else outright &mdash; every "
+                     "image, font, frame, connection and script from "
+                     "anywhere at all, including from this site")
     third += ("<p>Every page also carries a Content Security Policy. It "
-              "names that page's own script and stylesheet by their exact "
+              "names that page's own scripts and stylesheet by their exact "
               "fingerprints, allows the icon drawn into the page itself, "
-              "and forbids everything else outright &mdash; every image, "
-              "font, frame, connection and script from anywhere at all, "
-              "including from this site. It is there for the part we "
+              + else_part + ". It is there for the part we "
               "cannot check ourselves: a host can add a script to a page "
               "after we have built it, and once the page has left us the "
               "policy is the only instruction your browser still has from "
               "us.</p>")
 
-    body = ('<p>Short version: the site collects nothing. The '
+    short = ("the site counts page views and collects nothing else"
+             if ANALYTICS else "the site collects nothing")
+    body = ("<p>Short version: " + short + ". The "
             "detail below says exactly what that means, what an advertising "
             "space does, and what the host can still see.</p>"
             "<h2>Analytics</h2>" + an
@@ -2374,10 +2498,12 @@ def legal_pages():
               "it. Cloudflare's email obfuscation and script rewriting both "
               "do exactly that. We turn both off for this domain, and if a "
               "host adds something regardless, the content policy above is "
-              "what stops your browser from running it: the policy is built "
-              "from a hash of the exact code we shipped, so anything else "
-              "fails it. A promise about privacy is a promise about what "
-              "your browser loads, not about what we wrote.</p>"
+              "what stops your browser from running it: every piece of "
+              "code written into the page is named there by a hash of "
+              "exactly what we shipped, and the one address loaded from "
+              "outside is named in full, so anything else fails. A promise "
+              "about privacy is a promise about what your browser loads, "
+              "not about what we wrote.</p>"
             + "<h2>Contact and email</h2>"
               "<p>If you write to %s, we keep the message and your address "
               "for as long as it takes to answer, and delete it afterwards. "
@@ -2392,7 +2518,11 @@ def legal_pages():
                     as_sections(body), ptype="legal",
                     src="BiLingoPlus LLC",
                     label=hub_label("Notice", "Privacy",
-                                    "What this site stores about you: nothing"))
+                                    "What this site stores about you, and "
+                                    "what your browser loads"
+                                    if ANALYTICS else
+                                    "What this site stores about you: "
+                                    "nothing"))
 
     body = ('<p>This is a reference site. Use it freely, and do '
             "not use it as the last word on whether food is safe to eat.</p>"
